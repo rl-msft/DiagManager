@@ -217,7 +217,7 @@ if [ "${is_host_instnace_service_active}" == "YES" ]; then
 fi
 
 echo "======CGroup top======" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
-echo -e "\x1B[4mControl Group                                                                                 Tasks   %CPU   Memory  Input/s Output/s\x1B[0m" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
+echo -e "\x1B[4mControl Group                                                                                 Tasks   %CPU   Memory  Input/s Output/s\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info 
 systemd-cgtop -m -n 1 2>/dev/null >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
 echo "" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
 
@@ -226,7 +226,7 @@ grep cgroup /proc/filesystems 2>/dev/null >> $outputdir/${HOSTNAME}_os_systemd_c
 echo "" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
 
 echo "======top======" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
-top -n 1 >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
+top -n 1 -b >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
 echo "" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
 
 

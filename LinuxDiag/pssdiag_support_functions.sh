@@ -197,7 +197,7 @@ get_servicemanager_and_sqlservicestatus()
 
 sql_connect()
 {
-	echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | tee -a $pssdiag_log
+	echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 
 	MAX_ATTEMPTS=3
 	attempt_num=1
@@ -264,11 +264,11 @@ sql_connect()
 			$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME -U$XsrX -P$XssX -C -Q"select @@version" 2>&1 >/dev/null
 			if [[ $? -eq 0 ]]; then
 				sqlconnect=1
-				echo -e "\x1B[32mConnection was successful....\x1B[0m" | tee -a $pssdiag_log
+				echo -e "\x1B[32mConnection was successful....\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 				CONN_AUTH_OPTIONS="-U$XsrX -P$XssX"
 				break
 			else
-				echo -e "\x1B[31mLogin Attempt failed - Attempt ${attempt_num} of ${MAX_ATTEMPTS}, Please try again\x1B[0m" | tee -a $pssdiag_log
+				echo -e "\x1B[31mLogin Attempt failed - Attempt ${attempt_num} of ${MAX_ATTEMPTS}, Please try again\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 			fi
 			attempt_num=$(( attempt_num + 1 ))
 		done
@@ -288,7 +288,7 @@ sql_connect()
 			echo -e "\x1B[32mConnection was successful....\x1B[0m" | tee -a $pssdiag_log
 		else
 			#in case AD Authentication fails, try again using SQL Authentication for this particular instance 
-			echo -e "\x1B[33mWarning: AD Authentication failed for ${1} ${2}, refer to the above lines for errors, switching to SQL Authentication for ${1} ${2}" | tee -a $pssdiag_log
+			echo -e "\x1B[33mWarning: AD Authentication failed for ${1} ${2}, refer to the above lines for errors, switching to SQL Authentication for ${1} ${2}" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 			sql_connect ${1} ${2} ${3} "SQL"
 		fi
 	fi
