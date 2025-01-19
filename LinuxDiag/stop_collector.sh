@@ -88,7 +88,7 @@ pssdiag_inside_container_get_instance_status
 
 #Checks: make sure we have a valid authentication entered, we are running with system that has systemd
 if [[ ! -z "$authentication_mode" ]] && [[ $is_instance_inside_container_active == "NO" ]] && [[ "$authentication_mode" != "SQL" ]] && [[ "$authentication_mode" != "AD" ]] && [[ "$authentication_mode" != "NONE" ]]; then
-	echo -e "\x1B[33mwarning: wrong authentication mode (first argument passed to PSSDiag)\x1B[0m"
+	echo -e "\x1B[33mwarning: Invalid authentication mode (first argument passed to PSSDiag)\x1B[0m"
 	echo "" 
 	echo "Valid options are:" 
 	echo "  SQL"
@@ -101,7 +101,7 @@ fi
 
 #Checks: make sure we have a valid authentication entered, we are running with system that has no systemd
 if [[ ! -z "$authentication_mode" ]] && [[ $is_instance_inside_container_active == "YES" ]] && [[ "$authentication_mode" != "SQL" ]]; then
-	echo -e "\x1B[33mwarning: wrong authentication mode (first argument passed to PSSDiag)\x1B[0m"
+	echo -e "\x1B[33mwarning: Invalid authentication mode (first argument passed to PSSDiag)\x1B[0m"
 	echo "" 
 	echo "Valid options are:" 
 	echo "  SQL"
