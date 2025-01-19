@@ -372,14 +372,16 @@ while IFS= read -r line; do
 	if [[ "${config_section}" == "${2}" ]]; then
 		config_section_found=1
 	fi
-	option=$(echo ${line} | cut -d " " -f1)
+	option=$(echo ${line} | cut -d "=" -f1 | xargs )
 	if [[ "${config_section_found}" == 1 ]] && [[ "${option}" == "${3}" ]]; then
-		result=$(echo ${line//"$option"/} | tr -d '=') 
+		result=$(echo ${line//"$option"/} | tr -d '=' | xargs) 
 		break 
 	fi
 done < $1
-if [ -z "${result}" ]; then
-	echo "$(date -u +"%T %D") Reading host ${HOSTNAME} conf read from option ${1} option ${2} ${3}: ${result:-$4}">>$pssdiag_log
+if [ "${result}" ]; then
+	echo "$(date -u +"%T %D") Host instance ${HOSTNAME} conf file ${1} setting option [${2}] ${3} is set to : ${result}">>$pssdiag_log
+else
+	echo "$(date -u +"%T %D") Host instance ${HOSTNAME} conf file ${1} setting option [${2}] ${3} is not set in the conf file, using the default : ${4}">>$pssdiag_log
 fi
 echo ${result:-$4} 
 }
@@ -400,17 +402,19 @@ while IFS= read -r line; do
 	if [[ "${config_section}" == "${2}" ]]; then
 		config_section_found=1
 	fi
-	option=$(echo ${line} | cut -d " " -f1)
+	option=$(echo ${line} | cut -d "=" -f1 | xargs)
 	if [[ "${config_section_found}" == 1 ]] && [[ "${option}" == "${3}" ]]; then
-		result=$(echo ${line//"$option"/} | tr -d '=') 
+		result=$(echo ${line//"$option"/} | tr -d '=' | xargs) 
 		break 
 	fi
 done < "$tmpcontainertmpfile"
 
 #Remove tmpcontainertmpfile
 rm "$tmpcontainertmpfile"
-if [ -z "${result}" ]; then
-	echo "$(date -u +"%T %D") Reading container ${5} conf read from ${1} option ${2} ${3}: ${result:-$4}">>$pssdiag_log
+if [ "${result}" ]; then
+	echo "$(date -u +"%T %D") Container instance ${5} conf file ${1} setting option [${2}] ${3} is set to : ${result}">>$pssdiag_log
+else
+	echo "$(date -u +"%T %D") Container instance ${5} conf file ${1} setting option [${2}] ${3} is not set in the conf file, using the default : ${4}">>$pssdiag_log
 fi
 echo ${result:-$4} 
 }

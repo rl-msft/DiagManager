@@ -129,7 +129,7 @@ fi
 if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 	#Collecting errorlog* system_health*.xel log*.trc
 	get_host_instance_status
-	#only check if its installed, if its installed then regradlesss if its active or note we need to collect the logs 
+	#only check if its installed, if its installed then regradlesss if its active or not we need to collect the logs 
 	if [ "${is_host_instance_service_installed}" == "YES" ]; then
 		if [ -e "/var/opt/mssql/mssql.conf" ]; then
 			SQL_ERRORLOG=$(get_conf_optionx '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog')
@@ -164,7 +164,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 			echo -e "$(date -u +"%T %D") Collecting sqlagent logs from from host instance : ${HOSTNAME}..." | tee -a $pssdiag_log
 			if hash bzip2 2>/dev/null; then
 				current_dir="$PWD"
-				sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | bzip2 > $outputdir/${HOSTNAME}_host_instance_sqlagnet_logs.bz2
+				sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | bzip2 > $outputdir/${HOSTNAME}_host_instance_sqlagent_logs.bz2
 				cd ${current_dir}
 			else
 				current_dir="$PWD"
