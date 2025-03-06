@@ -65,11 +65,11 @@ function Capture_network_info()
 
 function capture_disk_info()
 {
-	capture_system_info_command "Disk Information" "lsblk -o NAME,MAJ:MIN,FSTYPE,MOUNTPOINT,PARTLABEL,SIZE,ALIGNMENT,PHY-SEC,LOG-SEC,MIN-IO,OPT-IO,ROTA,TYPE,RQ-SIZE,LABEL,MODEL,REV,VENDOR 2>/dev/null" 
-	capture_system_info_command "Disk Related Information" "blockdev --report 2>/dev/null"
-    capture_system_info_command "Disk Space Information" "df -TH 2>/dev/null"
-	capture_system_info_command "Disk Space Information" "fdisk -l 2>/dev/null"
 	capture_system_info_command "Checking Disk FUA Support" "dmesg 2>/dev/null | grep -i fua"
+	capture_system_info_command "Disk Information, lsblk" "lsblk -o NAME,MAJ:MIN,FSTYPE,MOUNTPOINT,PARTLABEL,SIZE,ALIGNMENT,PHY-SEC,LOG-SEC,MIN-IO,OPT-IO,ROTA,TYPE,RQ-SIZE,LABEL,MODEL,REV,VENDOR 2>/dev/null" 
+	capture_system_info_command "Disk Space Information, fdisk -l" "fdisk -l 2>/dev/null"
+    capture_system_info_command "Disk Space Information, df -TH" "df -TH 2>/dev/null"
+	capture_system_info_command "Disk blockdev report Information" "blockdev --report 2>/dev/null"
 }
 
 
