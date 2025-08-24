@@ -152,69 +152,8 @@ sql_collect_databases_disk_map()
         IFS='|' read -r db path mount fs dpofua device devtype block disk <<< "$row"
         printf "%-${max_db}s %-${max_path}s %-${max_mount}s %-${max_fs}s %-${max_dpofua}s %-${max_device}s %-${max_devtype}s %-${max_block}s %-${max_disk}s\n" \
         "$db" "$path" "$mount" "$fs" "$dpofua" "$device" "$devtype" "$block" "$disk" >> $outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.info
-        done
-        
-        
-
-
-
-        
-        
-        
-        
-        
-        # infolog_filename=$outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.info
-        # echo -e "$(date -u +"%T %D") Collecting SQL database disk map information..." | tee -a $pssdiag_log
-
-	# cmd=$'
-	# # Header for the output table
-	# printf "%-15s %-10s %-5s %-15s %-20s %-50s %s\n" \
-	#   "Mount" "Type" "FUA" "Database" "Logical_Name" "Physical_Name" "Filesystem Device"
-	# printf "%s\n" "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
-
-	# QUERY=$\'SET NOCOUNT ON;
-	# SELECT d.name AS db_name, mf.name AS logical_name, mf.physical_name
-	# FROM sys.master_files AS mf
-	# JOIN sys.databases AS d ON d.database_id = mf.database_id
-	# ORDER BY d.name, mf.file_id;\'
-
-	# $(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS \
-	#   -C -h -1 -W -s \'|\' -Q "$QUERY" \
-	# | grep -v \'^$\' \
-	# | while IFS=\'|\' read -r db_name logical_name physical_name; do
-	# 	db_name=$(sed \'s/^[[:space:]]*//; s/[[:space:]]*$//\' <<<"$db_name")
-	# 	logical_name=$(sed \'s/^[[:space:]]*//; s/[[:space:]]*$//\' <<<"$logical_name")
-	# 	physical_name=$(sed \'s/^[[:space:]]*//; s/[[:space:]]*$//\' <<<"$physical_name")
-
-	# 	lower_path=$(echo "$physical_name" | tr \'[:upper:]\' \'[:lower:]\')
-
-	# 	if [[ -e "$physical_name" ]]; then
-	# 	  actual_path="$physical_name"
-	# 	elif [[ -e "$lower_path" ]]; then
-	# 	  actual_path="$lower_path"
-	# 	else
-	# 	  printf "%-15s %-10s %-5s %-15s %-20s %-50s %s\n" \
-	# 		"-" "-" "-" "$db_name" "$logical_name" "$physical_name (missing)" "-"
-	# 	  continue
-	# 	fi
-
-	# 	resolved=$(readlink -f -- "$actual_path" 2>/dev/null || echo "$actual_path")
-	# 	actual_path="$resolved"
-
-	# 	df_output=$(df -T -- "$actual_path" | awk \'NR==2\')
-	# 	fs_type=$(awk \'{print $2}\' <<<"$df_output")
-	# 	fs=$(awk \'{print $1}\' <<<"$df_output")
-	# 	mount_point=$(awk \'{print $7}\' <<<"$df_output")
-
-	# 	dpofua=$(sg_modes "$fs" 2>/dev/null | grep -oE \'DpoFua=[01]\' | sed \'s/.*=//\')
-	# 	[[ -z "${dpofua:-}" ]] && dpofua="-"
-
-	# 	printf "%-15s %-10s %-5s %-15s %-20s %-50s %s\n" \
-	# 	  "$mount_point" "$fs_type" "$dpofua" "$db_name" "$logical_name" "$actual_path" "$fs"
-	# done'
-
-	# capture_system_info_command "Checking Disk FUA Support, df and sg_modes" "$cmd"
-}
+        done        
+ }
 
 # end of function definitions
 
