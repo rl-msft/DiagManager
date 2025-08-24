@@ -1,6 +1,6 @@
 #!/bin/bash
 
-script_version="20250301"
+script_version="20250901"
 MSSQL_CONF="/var/opt/mssql/mssql.conf"
 outputdir="$PWD/output"
 #SQL_LOG_DIR=${SQL_LOG_DIR:-"/var/opt/mssql/log"}
@@ -145,6 +145,17 @@ pssdiag_inside_container_get_instance_status()
 		if [[ "$(ps -C sqlservr -o pid= | head -n 1 | tr -d ' ')" == "1" ]]; then
 			is_instance_inside_container_active="YES"
 		fi
+	fi
+}
+
+#Check if we are running inside WSL
+get_wsl_instance_status()
+{
+	is_host_instance_inside_wsl="NO"
+	if [ -n "$WSL_DISTRO_NAME" ]; then
+		is_host_instance_inside_wsl="YES"
+	else
+		is_host_instance_inside_wsl="NO"
 	fi
 }
 

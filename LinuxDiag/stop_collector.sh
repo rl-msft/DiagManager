@@ -76,6 +76,146 @@ sql_collect_linux_snapshot()
         $(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1)  -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Linux_Snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Snapshot_Shutdown.out"
 }
 
+sql_collect_databases_disk_map()
+{
+        
+        echo -e "$(date -u +"%T %D") Collecting SQL database disk map information..." | tee -a $pssdiag_log
+
+
+        QUERY=$'SET NOCOUNT ON;
+        SELECT d.name AS db_name, mf.physical_name
+        FROM sys.master_files AS mf
+        JOIN sys.databases AS d ON d.database_id = mf.database_id
+        ORDER BY d.name, mf.file_id;'
+
+        # Collect data into an array
+        data=()
+        while IFS='|' read -r db_name physical_name; do
+        db_name=$(echo "$db_name" | sed 's/^ *//;s/ *$//')
+        physical_name=$(echo "$physical_name" | sed 's/^ *//;s/ *$//')
+
+        lower_path=$(echo "$physical_name" | tr '[:upper:]' '[:lower:]')
+
+        if [[ -e "$physical_name" ]]; then
+        actual_path="$physical_name"
+        elif [[ -e "$lower_path" ]]; then
+        actual_path="$lower_path"
+        else
+        actual_path="$physical_name (missing)"
+        fi
+
+        resolved=$(readlink -f -- "$actual_path" 2>/dev/null || echo "$actual_path")
+        actual_path="$resolved"
+
+        df_output=$(df -T -- "$actual_path" | awk 'NR==2')
+        fs_type=$(echo "$df_output" | awk '{print $2}')
+        fs=$(echo "$df_output" | awk '{print $1}')
+        mount_point=$(echo "$df_output" | awk '{print $7}')
+
+        dpofua=$(sg_modes "$fs" 2>/dev/null | grep -oE 'DpoFua=[01]' | sed 's/.*=//')
+        [[ -z "${dpofua:-}" ]] && dpofua="-"
+
+        block_info=$(lsblk -no NAME,TYPE "$fs" 2>/dev/null | head -n 1)
+        block_device=$(echo "$block_info" | awk '{print $1}')
+        device_type=$(echo "$block_info" | awk '{print $2}')
+        [[ -z "$block_device" ]] && block_device="-"
+        [[ -z "$device_type" ]] && device_type="-"
+
+        disk=$(lvdisplay -m "$fs" 2>/dev/null | awk '/Physical volume/ {print $3}')
+        [[ -z "$disk" ]] && disk="-"
+
+        data+=("$db_name|$actual_path|$mount_point|$fs_type|$dpofua|$fs|$device_type|$block_device|$disk")
+        done < <($(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -h -1 -W -s '|' -Q "$QUERY" | grep -v '^$')
+
+        # Determine max widths
+        max_db=8; max_path=13; max_mount=5; max_fs=10; max_dpofua=6; max_device=6; max_devtype=7; max_block=8; max_disk=4
+        for row in "${data[@]}"; do
+        IFS='|' read -r db path mount fs dpofua device devtype block disk <<< "$row"
+        (( ${#db} > max_db )) && max_db=${#db}
+        (( ${#path} > max_path )) && max_path=${#path}
+        (( ${#mount} > max_mount )) && max_mount=${#mount}
+        (( ${#fs} > max_fs )) && max_fs=${#fs}
+        (( ${#dpofua} > max_dpofua )) && max_dpofua=${#dpofua}
+        (( ${#device} > max_device )) && max_device=${#device}
+        (( ${#devtype} > max_devtype )) && max_devtype=${#devtype}
+        (( ${#block} > max_block )) && max_block=${#block}
+        (( ${#disk} > max_disk )) && max_disk=${#disk}
+        done
+
+        # Print header
+        printf "%-${max_db}s %-${max_path}s %-${max_mount}s %-${max_fs}s %-${max_dpofua}s %-${max_device}s %-${max_devtype}s %-${max_block}s %-${max_disk}s\n" \
+        "Database" "Physical_Name" "Mount" "Filesystem" "dpofua" "device" "DevType" "BlockDev" "Disk" >> $outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.info
+        printf "%s\n" "$(printf '%0.s-' $(seq 1 $((max_db + max_path + max_mount + max_fs + max_dpofua + max_device + max_devtype + max_block + max_disk + 9))))" >> $outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.info
+
+        # Print rows
+        for row in "${data[@]}"; do
+        IFS='|' read -r db path mount fs dpofua device devtype block disk <<< "$row"
+        printf "%-${max_db}s %-${max_path}s %-${max_mount}s %-${max_fs}s %-${max_dpofua}s %-${max_device}s %-${max_devtype}s %-${max_block}s %-${max_disk}s\n" \
+        "$db" "$path" "$mount" "$fs" "$dpofua" "$device" "$devtype" "$block" "$disk" >> $outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.info
+        done
+        
+        
+
+
+
+        
+        
+        
+        
+        
+        # infolog_filename=$outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.info
+        # echo -e "$(date -u +"%T %D") Collecting SQL database disk map information..." | tee -a $pssdiag_log
+
+	# cmd=$'
+	# # Header for the output table
+	# printf "%-15s %-10s %-5s %-15s %-20s %-50s %s\n" \
+	#   "Mount" "Type" "FUA" "Database" "Logical_Name" "Physical_Name" "Filesystem Device"
+	# printf "%s\n" "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+
+	# QUERY=$\'SET NOCOUNT ON;
+	# SELECT d.name AS db_name, mf.name AS logical_name, mf.physical_name
+	# FROM sys.master_files AS mf
+	# JOIN sys.databases AS d ON d.database_id = mf.database_id
+	# ORDER BY d.name, mf.file_id;\'
+
+	# $(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS \
+	#   -C -h -1 -W -s \'|\' -Q "$QUERY" \
+	# | grep -v \'^$\' \
+	# | while IFS=\'|\' read -r db_name logical_name physical_name; do
+	# 	db_name=$(sed \'s/^[[:space:]]*//; s/[[:space:]]*$//\' <<<"$db_name")
+	# 	logical_name=$(sed \'s/^[[:space:]]*//; s/[[:space:]]*$//\' <<<"$logical_name")
+	# 	physical_name=$(sed \'s/^[[:space:]]*//; s/[[:space:]]*$//\' <<<"$physical_name")
+
+	# 	lower_path=$(echo "$physical_name" | tr \'[:upper:]\' \'[:lower:]\')
+
+	# 	if [[ -e "$physical_name" ]]; then
+	# 	  actual_path="$physical_name"
+	# 	elif [[ -e "$lower_path" ]]; then
+	# 	  actual_path="$lower_path"
+	# 	else
+	# 	  printf "%-15s %-10s %-5s %-15s %-20s %-50s %s\n" \
+	# 		"-" "-" "-" "$db_name" "$logical_name" "$physical_name (missing)" "-"
+	# 	  continue
+	# 	fi
+
+	# 	resolved=$(readlink -f -- "$actual_path" 2>/dev/null || echo "$actual_path")
+	# 	actual_path="$resolved"
+
+	# 	df_output=$(df -T -- "$actual_path" | awk \'NR==2\')
+	# 	fs_type=$(awk \'{print $2}\' <<<"$df_output")
+	# 	fs=$(awk \'{print $1}\' <<<"$df_output")
+	# 	mount_point=$(awk \'{print $7}\' <<<"$df_output")
+
+	# 	dpofua=$(sg_modes "$fs" 2>/dev/null | grep -oE \'DpoFua=[01]\' | sed \'s/.*=//\')
+	# 	[[ -z "${dpofua:-}" ]] && dpofua="-"
+
+	# 	printf "%-15s %-10s %-5s %-15s %-20s %-50s %s\n" \
+	# 	  "$mount_point" "$fs_type" "$dpofua" "$db_name" "$logical_name" "$actual_path" "$fs"
+	# done'
+
+	# capture_system_info_command "Checking Disk FUA Support, df and sg_modes" "$cmd"
+}
+
 # end of function definitions
 
 ##############################
@@ -184,6 +324,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
                         # *.xel and *.trc files are placed in the output folder, nothing to collect here 
                         sql_collect_alwayson "${HOSTNAME}" "host_instance"
                         sql_collect_querystore "${HOSTNAME}" "host_instance"
+                        sql_collect_databases_disk_map "${HOSTNAME}" "host_instance"
                 fi
         fi
 
@@ -213,6 +354,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
                         sql_collect_config "${HOSTNAME}" "instance"
                         sql_collect_linux_snapshot "${HOSTNAME}" "instance"
                         sql_collect_perfstats_snapshot "${HOSTNAME}" "instance"
+                        sql_collect_databases_disk_map "${HOSTNAME}" "instance"
                 fi
         fi  
 fi
@@ -247,6 +389,7 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                 sql_collect_config "${dockername}" "container_instance"
                                 sql_collect_linux_snapshot "${dockername}" "container_instance"
                                 sql_collect_perfstats_snapshot "${dockername}" "container_instance"
+                                sql_collect_databases_disk_map "${dockername}" "container_instance"
                         fi
                 # we finished processing the requested container
                 else
@@ -276,6 +419,7 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                         sql_collect_config "${dockername}" "container_instance"
                                         sql_collect_linux_snapshot "${dockername}" "container_instance"
                                         sql_collect_perfstats_snapshot "${dockername}" "container_instance"
+                                        sql_collect_databases_disk_map "${dockername}" "container_instance"
                                 fi
                         done;
                 # we finished processing all the container

@@ -64,8 +64,11 @@ function Capture_network_info()
 }
 
 function capture_disk_info()
-{
-	capture_system_info_command "Checking Disk FUA Support" "dmesg 2>/dev/null | grep -i fua"
+{  
+    cmd='df -T | awk '\''NR>1 && ($2 == "xfs" || $2 == "ext4") {print $1, $2}'\'' | while read fs type; do echo "Filesystem: $fs, Type: $type"; sg_modes_output=$(sg_modes -6 "$fs"); echo "$sg_modes_output"; done'
+    capture_system_info_command "Checking Disk FUA Support, df and sg_modes" "$cmd"
+    capture_system_info_command "Checking Disk FUA Support, dmesg" "dmesg 2>/dev/null | grep -i fua"
+    capture_system_info_command "Checking Disk FUA Support, lshw -class disk" "lshw -class disk"
 	capture_system_info_command "Disk Information, lsblk" "lsblk -o NAME,MAJ:MIN,FSTYPE,MOUNTPOINT,PARTLABEL,SIZE,ALIGNMENT,PHY-SEC,LOG-SEC,MIN-IO,OPT-IO,ROTA,TYPE,RQ-SIZE,LABEL,MODEL,REV,VENDOR 2>/dev/null" 
 	capture_system_info_command "Disk Space Information, fdisk -l" "fdisk -l 2>/dev/null"
     capture_system_info_command "Disk Space Information, df -TH" "df -TH 2>/dev/null"
