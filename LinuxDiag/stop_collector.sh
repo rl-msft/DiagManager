@@ -78,83 +78,10 @@ sql_collect_linux_snapshot()
 
 sql_collect_databases_disk_map()
 {
-        
         echo -e "$(date -u +"%T %D") Collecting SQL database disk map information..." | tee -a $pssdiag_log
-
-
-        QUERY=$'SET NOCOUNT ON;
-        SELECT d.name AS db_name, mf.physical_name
-        FROM sys.master_files AS mf
-        JOIN sys.databases AS d ON d.database_id = mf.database_id
-        ORDER BY d.name, mf.file_id;'
-
-        # Collect data into an array
-        data=()
-        while IFS='|' read -r db_name physical_name; do
-        db_name=$(echo "$db_name" | sed 's/^ *//;s/ *$//')
-        physical_name=$(echo "$physical_name" | sed 's/^ *//;s/ *$//')
-
-        lower_path=$(echo "$physical_name" | tr '[:upper:]' '[:lower:]')
-
-        if [[ -e "$physical_name" ]]; then
-        actual_path="$physical_name"
-        elif [[ -e "$lower_path" ]]; then
-        actual_path="$lower_path"
-        else
-        actual_path="$physical_name (missing)"
-        fi
-
-        resolved=$(readlink -f -- "$actual_path" 2>/dev/null || echo "$actual_path")
-        actual_path="$resolved"
-
-        df_output=$(df -T -- "$actual_path" | awk 'NR==2')
-        fs_type=$(echo "$df_output" | awk '{print $2}')
-        fs=$(echo "$df_output" | awk '{print $1}')
-        mount_point=$(echo "$df_output" | awk '{print $7}')
-
-        dpofua=$(sg_modes "$fs" 2>/dev/null | grep -oE 'DpoFua=[01]' | sed 's/.*=//')
-        [[ -z "${dpofua:-}" ]] && dpofua="-"
-
-        block_info=$(lsblk -no NAME,TYPE "$fs" 2>/dev/null | head -n 1)
-        block_device=$(echo "$block_info" | awk '{print $1}')
-        device_type=$(echo "$block_info" | awk '{print $2}')
-        [[ -z "$block_device" ]] && block_device="-"
-        [[ -z "$device_type" ]] && device_type="-"
-
-        disk=$(lvdisplay -m "$fs" 2>/dev/null | awk '/Physical volume/ {print $3}')
-        [[ -z "$disk" ]] && disk="-"
-
-        data+=("$db_name|$actual_path|$mount_point|$fs_type|$dpofua|$fs|$device_type|$block_device|$disk")
-        done < <($(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -h -1 -W -s '|' -Q "$QUERY" | grep -v '^$')
-
-        # Determine max widths
-        max_db=8; max_path=13; max_mount=5; max_fs=10; max_dpofua=6; max_device=6; max_devtype=7; max_block=8; max_disk=4
-        for row in "${data[@]}"; do
-        IFS='|' read -r db path mount fs dpofua device devtype block disk <<< "$row"
-        (( ${#db} > max_db )) && max_db=${#db}
-        (( ${#path} > max_path )) && max_path=${#path}
-        (( ${#mount} > max_mount )) && max_mount=${#mount}
-        (( ${#fs} > max_fs )) && max_fs=${#fs}
-        (( ${#dpofua} > max_dpofua )) && max_dpofua=${#dpofua}
-        (( ${#device} > max_device )) && max_device=${#device}
-        (( ${#devtype} > max_devtype )) && max_devtype=${#devtype}
-        (( ${#block} > max_block )) && max_block=${#block}
-        (( ${#disk} > max_disk )) && max_disk=${#disk}
-        done
-
-        # Print header
-        printf "%-${max_db}s %-${max_path}s %-${max_mount}s %-${max_fs}s %-${max_dpofua}s %-${max_device}s %-${max_devtype}s %-${max_block}s %-${max_disk}s\n" \
-        "Database" "Physical_Name" "Mount" "Filesystem" "dpofua" "device" "DevType" "BlockDev" "Disk" >> $outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.info
-        printf "%s\n" "$(printf '%0.s-' $(seq 1 $((max_db + max_path + max_mount + max_fs + max_dpofua + max_device + max_devtype + max_block + max_disk + 9))))" >> $outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.info
-
-        # Print rows
-        for row in "${data[@]}"; do
-        IFS='|' read -r db path mount fs dpofua device devtype block disk <<< "$row"
-        printf "%-${max_db}s %-${max_path}s %-${max_mount}s %-${max_fs}s %-${max_dpofua}s %-${max_device}s %-${max_devtype}s %-${max_block}s %-${max_disk}s\n" \
-        "$db" "$path" "$mount" "$fs" "$dpofua" "$device" "$devtype" "$block" "$disk" >> $outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.info
-        done        
- }
-
+        ./collect_sql_database_disk_map.sh "$SQL_SERVER_NAME" "$CONN_AUTH_OPTIONS" >> $outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.out
+}
+ 
 # end of function definitions
 
 ##############################
@@ -233,6 +160,7 @@ COLLECT_SQL_TRACE=${COLLECT_SQL_TRACE:-"NO"}
 COLLECT_QUERY_STORE=${COLLECT_QUERY_STORE:-"NO"}
 COLLECT_SQL_HA_LOGS=${COLLECT_SQL_HA_LOGS:-"NO"}
 COLLECT_SQL_SEC_AD_LOGS=${COLLECT_SQL_SEC_AD_LOGS:-"NO"}
+COLLECT_SQL_BEST_PRACTICES=${COLLECT_SQL_BEST_PRACTICES:-"NO"}
 if [[ ${authentication_mode} == "SQL" ]] || [[ ${authentication_mode} == "AD" ]] || [[ ${authentication_mode} == "NONE" ]]; then
 	SQL_CONNECT_AUTH_MODE=${authentication_mode:-"SQL"}
 fi
@@ -402,6 +330,12 @@ fi
 #gather SQL Security and AD logs from containers or host
 if [[ "$COLLECT_SQL_SEC_AD_LOGS" == "YES" ]]; then
 	./collect_sql_ad_logs.sh
+fi
+
+#gather SQL Best Practices Analyzer
+if [[ "$COLLECT_SQL_BEST_PRACTICES" == "YES" ]]; then
+	echo -e "$(date -u +"%T %D") Collecting SQL Linux Best Practice Analyzer..." | tee -a $pssdiag_log
+        ./sql_linux_best_practice_analyzer.sh --explain-all >> $outputdir/${HOSTNAME}_SQL_Linux_Best_Practice_Analyzer.out
 fi
 
 echo -e "\x1B[2;34m=======================================  Creating Compressed Archive =======================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
