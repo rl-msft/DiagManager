@@ -20,11 +20,11 @@
 #     https://learn.microsoft.com/sql/linux/sql-server-linux-performance-best-practices?view=sql-server-ver16
 #
 # This script DOES NOT modify the system.
+# VERSION="beta 1.5"
 # =============================================================================
-set -euo pipefail
 
 TITLE="SQL on Linux best practice analyzer"
-VERSION="1.5"
+VERSION="1.5 beta"
 GREEN="\e[32m"; YELLOW="\e[33m"; RED="\e[31m"; NC="\e[0m"
 
 pass(){ echo -e "${GREEN}PASS${NC}  - $*"; }
@@ -433,3 +433,4 @@ done
 # Summary
 # -----------------------------------------------------------------------------
 echo -e "\n=== Analysis complete ==="
+echo -e "For more details, visit: https://learn.microsoft.com/en-us/sql/linux/sql-server-linux-performance-best-practices?view=sql-server-ver17"
