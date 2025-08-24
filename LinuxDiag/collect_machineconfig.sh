@@ -73,6 +73,7 @@ function capture_disk_info()
 	capture_system_info_command "Disk Space Information, fdisk -l" "fdisk -l 2>/dev/null"
     capture_system_info_command "Disk Space Information, df -TH" "df -TH 2>/dev/null"
 	capture_system_info_command "Disk blockdev report Information" "blockdev --report 2>/dev/null"
+    capture_system_info_command "/etc/fstab" "cat /etc/fstab 2>/dev/null"
 }
 
 
