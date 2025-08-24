@@ -251,7 +251,7 @@ sql_connect()
 		fi
 	fi
 
-	echo -e "Establishing SQL connection to ${1} ${2} and port ${3} using ${auth_mode} authentication mode" | tee -a $pssdiag_log
+	echo -e "$(date -u +"%T %D") Establishing SQL connection to ${1} ${2} and port ${3} using ${auth_mode} authentication mode" | tee -a $pssdiag_log
 	
 	#Test SQL Authentication, we allow them to try few times using SQL Auth
 	if [[ $auth_mode = "SQL" ]]; then
@@ -271,11 +271,13 @@ sql_connect()
 			#prompt for credentials for SQL authentication
 			read -r -p $'\e[1;34mEnter SQL UserName: \e[0m' XsrX
 			read -s -r -p $'\e[1;34mEnter User Password: \e[0m' XssX
-			echo "" | tee -a $pssdiag_log
+			echo ""
 			$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME -U$XsrX -P$XssX -C -Q"select @@version" 2>&1 >/dev/null
 			if [[ $? -eq 0 ]]; then
 				sqlconnect=1
-				echo -e "\x1B[32mConnection was successful....\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+				echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+				sql_ver=$($(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME -E -C -Q"PRINT CONVERT(NVARCHAR(128), SERVERPROPERTY('ProductVersion'))")
+				echo "$(date -u +"%T %D") SQL Server version  ${sql_ver}" >> $pssdiag_log
 				CONN_AUTH_OPTIONS="-U$XsrX -P$XssX"
 				break
 			else
@@ -296,7 +298,9 @@ sql_connect()
     	if [[ $? -eq 0 ]]; then   	
 			sqlconnect=1;
 			CONN_AUTH_OPTIONS='-E'
-			echo -e "\x1B[32mConnection was successful....\x1B[0m" | tee -a $pssdiag_log
+			echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | tee -a $pssdiag_log
+			sql_ver=$($(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME -E -C -Q"PRINT CONVERT(NVARCHAR(128), SERVERPROPERTY('ProductVersion'))")
+			echo "$(date -u +"%T %D") SQL Server version  ${sql_ver}" >> $pssdiag_log
 		else
 			#in case AD Authentication fails, try again using SQL Authentication for this particular instance 
 			echo -e "\x1B[33mWarning: AD Authentication failed for ${1} ${2}, refer to the above lines for errors, switching to SQL Authentication for ${1} ${2}" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log

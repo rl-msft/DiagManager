@@ -173,7 +173,6 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 	if [ "${is_host_instnace_service_active}" == "YES" ]; then
                 SQL_LISTEN_PORT=$(get_sql_listen_port "host_instance")
                 SQL_SERVER_NAME="$HOSTNAME,$SQL_LISTEN_PORT"
-                echo -e "" | tee -a $pssdiag_log
                 echo -e "\x1B[7mCollecting information from host instance $HOSTNAME and port $SQL_LISTEN_PORT...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
                 sql_connect "host_instance" "${HOSTNAME}" "${SQL_LISTEN_PORT}" "${authentication_mode}"
                 sqlconnect=$?
@@ -183,6 +182,9 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
                 else
                         sql_stop_xevent "${HOSTNAME}" "host_instance" 
                         sql_stop_trace "${HOSTNAME}" "host_instance" 
+
+                        echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+
                         sql_collect_config "${HOSTNAME}" "host_instance"
                         sql_collect_linux_snapshot "${HOSTNAME}" "host_instance"
                   	sql_collect_perfstats_snapshot "${HOSTNAME}" "host_instance"
@@ -203,7 +205,6 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 	pssdiag_inside_container_get_instance_status
 	if [ "${is_instance_inside_container_active}" == "YES" ]; then
                 SQL_SERVER_NAME="$HOSTNAME,1433"
-                echo -e "" | tee -a $pssdiag_log
                 echo -e "\x1B[7mCollecting information from instance $HOSTNAME and port 1433...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
                 sql_connect "instance" "${HOSTNAME}" "1433" "${authentication_mode}"
                 sqlconnect=$?
@@ -213,6 +214,9 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
                 else
                         sql_stop_xevent "${HOSTNAME}" "instance" 
                         sql_stop_trace "${HOSTNAME}" "instance" 
+
+                        echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+
                         #chown only if pattern exists.
                         stat -t -- $output/*.xel >/dev/null 2>&1 && chown $USER: $outputdir/*.xel
                         # *.xel and *.trc files are placed in the output folder, nothing to collect here 
@@ -226,7 +230,6 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
         fi  
 fi
 
-echo -e "" | tee -a $pssdiag_log
 
 if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
 # we need to collect logs from containers
@@ -239,7 +242,6 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                         get_docker_mapped_port "${dockerid}"
                         #SQL_SERVER_NAME="$HOSTNAME,$dockerport"    
                         SQL_SERVER_NAME="$dockername,$dockerport"
-                        echo -e "" | tee -a $pssdiag_log
                         echo -e "\x1B[7mCollecting information from container instance ${dockername} and port ${dockerport}\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
                         sql_connect "container_instance" "${dockername}" "${dockerport}" "${authentication_mode}"
                         sqlconnect=$?
@@ -249,6 +251,9 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                         else
                                 sql_stop_xevent "${dockername}" "container_instance" 
                                 sql_stop_trace "${dockername}" "container_instance" 
+                                
+                                echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+
                                 sql_collect_xevent "${dockerid}" "${dockername}" "container_instance"
                                 sql_collect_trace "${dockerid}" "${dockername}" "container_instance"
                                 sql_collect_alwayson "${dockername}" "container_instance"
@@ -269,7 +274,6 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                 #moved to helper function
                                 get_docker_mapped_port "${dockerid}"
                                 SQL_SERVER_NAME="$dockername,$dockerport"
-                                echo -e "" | tee -a $pssdiag_log
                                 echo -e "\x1B[7mCollecting information from container instance ${dockername} and port ${dockerport}\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
                                 sql_connect "container_instance" "${dockername}" "${dockerport}" "${authentication_mode}"
                                 sqlconnect=$?
@@ -279,6 +283,9 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                 else
                                         sql_stop_xevent "${dockername}" "container_instance" 
                                         sql_stop_trace "${dockername}" "container_instance" 
+                                        
+                                        echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+
                                         sql_collect_xevent "${dockerid}" "${dockername}" "container_instance"
                                         sql_collect_trace "${dockerid}" "${dockername}" "container_instance"
                                         sql_collect_alwayson "${dockername}" "container_instance"
@@ -294,9 +301,6 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
         fi
 fi
 
-echo -e "" | tee -a $pssdiag_log
-
-echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 
 #collect basic machine configuration
 if [[ $COLLECT_OS_CONFIG == "YES" ]]; then
