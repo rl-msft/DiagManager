@@ -173,7 +173,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 	if [ "${is_host_instnace_service_active}" == "YES" ]; then
                 SQL_LISTEN_PORT=$(get_sql_listen_port "host_instance")
                 SQL_SERVER_NAME="$HOSTNAME,$SQL_LISTEN_PORT"
-                echo -e "\x1B[7m$(date -u +"%T %D")Collecting information from host instance $HOSTNAME and port $SQL_LISTEN_PORT...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+                echo -e "\x1B[7m$(date -u +"%T %D") Collecting information from host instance $HOSTNAME and port $SQL_LISTEN_PORT...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
                 sql_connect "host_instance" "${HOSTNAME}" "${SQL_LISTEN_PORT}" "${authentication_mode}"
                 sqlconnect=$?
                 if [[ $sqlconnect -ne 1 ]]; then
@@ -335,7 +335,7 @@ fi
 
 #gather SQL Best Practices Analyzer
 if [[ "$COLLECT_SQL_BEST_PRACTICES" == "YES" ]]; then
-	echo -e "$(date -u +"%T %D") Collecting SQL Linux Best Practice Analyzer..." | tee -a $pssdiag_log
+	echo -e "$(date -u +"%T %D") Collecting SQL Linux Best Practices Analyzer..." | tee -a $pssdiag_log
         ./sql_linux_best_practices_analyzer.sh --explain-all >> $outputdir/${HOSTNAME}_SQL_Linux_Best_Practice_Analyzer.out
 fi
 
