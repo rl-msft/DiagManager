@@ -552,7 +552,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 		SQL_LISTEN_PORT=$(get_sql_listen_port "host_instance")
 		#SQL_SERVER_NAME="$HOSTNAME,$SQL_LISTEN_PORT"
 		#echo -e "" | tee -a $pssdiag_log
-		echo -e "\x1B[7mCollecting startup information from host instance $HOSTNAME and port ${SQL_LISTEN_PORT}...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+		echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from host instance $HOSTNAME and port ${SQL_LISTEN_PORT}...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 		sql_connect "host_instance" "${HOSTNAME}" "${SQL_LISTEN_PORT}" "${authentication_mode}"
 		sqlconnect=$?
 		if [[ $sqlconnect -ne 1 ]]; then
@@ -581,7 +581,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 	if [ "${is_instance_inside_container_active}" == "YES" ]; then
 	    SQL_SERVER_NAME="$HOSTNAME,1433"
 		#echo -e "" | tee -a $pssdiag_log
-		echo -e "\x1B[7mCollecting startup information from instance $HOSTNAME and port 1433...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+		echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from instance $HOSTNAME and port 1433...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 		sql_connect "instance" "${HOSTNAME}" "1433" "${authentication_mode}"
 		sqlconnect=$?
 		if [[ $sqlconnect -ne 1 ]]; then
@@ -612,7 +612,7 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
             get_docker_mapped_port "${dockerid}"
  	        #SQL_SERVER_NAME="$dockername,$dockerport"
 			#echo -e "" | tee -a $pssdiag_log
-			echo -e "\x1B[7mCollecting startup information from container instance ${dockername} and port ${dockerport}\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+			echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from container instance ${dockername} and port ${dockerport}\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 	        sql_connect "container_instance" "${dockername}" "${dockerport}" "${authentication_mode}"
         	sqlconnect=$?
 	        if [[ $sqlconnect -ne 1 ]]; then
@@ -639,7 +639,7 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                 	get_docker_mapped_port "${dockerid}"
 	                #SQL_SERVER_NAME="$dockername,$dockerport"
 					#echo -e ""  | tee -a $pssdiag_log
-					echo -e "\x1B[7mCollecting startup information from container_instance ${dockername} and port ${dockerport}\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+					echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from container_instance ${dockername} and port ${dockerport}\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 	                sql_connect "container_instance" "${dockername}" "${dockerport}" "${authentication_mode}"
         	        sqlconnect=$?
                 	if [[ $sqlconnect -ne 1 ]]; then
