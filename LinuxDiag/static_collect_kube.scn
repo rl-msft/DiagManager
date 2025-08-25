@@ -74,6 +74,9 @@ COLLECT_SQL_HA_LOGS=YES
 # Collects SQL security, encryption and AD related settings and log
 COLLECT_SQL_SEC_AD_LOGS=YES
 
+# Collect SQL Server Best Practices
+COLLECT_SQL_BEST_PRACTICES=NO
+
 # If you want any other custom collection, set this to YES and change the my_custom_collector.sql file to include your queries. only for sql_perf.scn based scenarios
 CUSTOM_COLLECTOR=NO
 
