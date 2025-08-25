@@ -225,7 +225,6 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
                         sql_collect_config "${HOSTNAME}" "instance"
                         sql_collect_linux_snapshot "${HOSTNAME}" "instance"
                         sql_collect_perfstats_snapshot "${HOSTNAME}" "instance"
-                        sql_collect_databases_disk_map "${HOSTNAME}" "instance"
                 fi
         fi  
 fi
@@ -261,7 +260,6 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                 sql_collect_config "${dockername}" "container_instance"
                                 sql_collect_linux_snapshot "${dockername}" "container_instance"
                                 sql_collect_perfstats_snapshot "${dockername}" "container_instance"
-                                sql_collect_databases_disk_map "${dockername}" "container_instance"
                         fi
                 # we finished processing the requested container
                 else
@@ -293,7 +291,6 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                         sql_collect_config "${dockername}" "container_instance"
                                         sql_collect_linux_snapshot "${dockername}" "container_instance"
                                         sql_collect_perfstats_snapshot "${dockername}" "container_instance"
-                                        sql_collect_databases_disk_map "${dockername}" "container_instance"
                                 fi
                         done;
                 # we finished processing all the container

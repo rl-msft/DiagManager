@@ -44,8 +44,12 @@ else
 fi
 if hash bzip2 2>/dev/null; then
 	docker exec $dockerid sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | bzip2 > $outputdir/${dockername}_container_instance_sqlagent_logs.bz2
+	# Collecting sqlagentstartup.log, which is always at /var/opt/mssql/log regardless of filelocation in mssql.conf
+	docker exec $dockerid sh -c "cd /var/opt/mssql/log/ && tar -cf - sqlagentstartup.log" | bzip2 >> $outputdir/${dockername}_container_instance_sqlagent_logs.bz2
 else
-	docker exec $dockerid sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | $outputdir/${dockername}_container_instance_sqlagent_logs.tar
+	docker exec $dockerid sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | cat > $outputdir/${dockername}_container_instance_sqlagent_logs.tar
+	# Collecting sqlagentstartup.log, which is always at /var/opt/mssql/log regardless of filelocation in mssql.conf
+	docker exec $dockerid sh -c "cd /var/opt/mssql/log/ && tar -cf - sqlagentstartup.log" | cat >> $outputdir/${dockername}_container_instance_sqlagent_logs.tar
 fi
 
 ##Collecting pal logs form container instance
@@ -170,10 +174,14 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 			if hash bzip2 2>/dev/null; then
 				current_dir="$PWD"
 				sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | bzip2 > $outputdir/${HOSTNAME}_host_instance_sqlagent_logs.bz2
+				# Collecting sqlagentstartup.log, which is always at /var/opt/mssql/log regardless of filelocation in mssql.conf
+				sh -c "cd /var/opt/mssql/log && tar -cf - sqlagentstartup.log" | bzip2 >> $outputdir/${HOSTNAME}_host_instance_sqlagent_logs.bz2
 				cd ${current_dir}
 			else
 				current_dir="$PWD"
-				sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | $outputdir/${HOSTNAME}_host_instance_sqlagent_logs.tar
+				sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | cat > $outputdir/${HOSTNAME}_host_instance_sqlagent_logs.tar
+				# Collecting sqlagentstartup.log, which is always at /var/opt/mssql/log regardless of filelocation in mssql.conf
+				sh -c "cd /var/opt/mssql/log && tar -cf - sqlagentstartup.log" | cat >> $outputdir/${HOSTNAME}_host_instance_sqlagent_logs.tar
 				cd ${current_dir}
 			fi
 		fi
@@ -237,11 +245,15 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 			echo -e "$(date -u +"%T %D") Collecting sqlagent logs from from instance : ${HOSTNAME}..." | tee -a $pssdiag_log
 			if hash bzip2 2>/dev/null; then
 				current_dir="$PWD"
-				sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | bzip2 > $outputdir/${HOSTNAME}_instance_sqlagnet_logs.bz2
+				sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | bzip2 > $outputdir/${HOSTNAME}_instance_sqlagent_logs.bz2
+				# Collecting sqlagentstartup.log, which is always at /var/opt/mssql/log regardless of filelocation in mssql.conf
+				sh -c "cd /var/opt/mssql/log && tar -cf - sqlagentstartup.log" | bzip2 >> $outputdir/${HOSTNAME}_instance_sqlagent_logs.bz2
 				cd ${current_dir}
 			else
 				current_dir="$PWD"
-				sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | $outputdir/${HOSTNAME}_host_instance_sqlagent_logs.tar
+				sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | cat > $outputdir/${HOSTNAME}_host_instance_sqlagent_logs.tar
+				# Collecting sqlagentstartup.log, which is always at /var/opt/mssql/log regardless of filelocation in mssql.conf
+				sh -c "cd /var/opt/mssql/log && tar -cf - sqlagentstartup.log" | cat >> $outputdir/${HOSTNAME}_host_instance_sqlagent_logs.tar
 				cd ${current_dir}
 			fi
 		fi

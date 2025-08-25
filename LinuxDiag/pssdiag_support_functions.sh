@@ -271,7 +271,6 @@ sql_connect()
 			#prompt for credentials for SQL authentication
 			read -r -p $'\e[1;34mEnter SQL UserName: \e[0m' XsrX
 			read -s -r -p $'\e[1;34mEnter User Password: \e[0m' XssX
-			echo ""
 			$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME -U$XsrX -P$XssX -C -Q"select @@version" 2>&1 >/dev/null
 			if [[ $? -eq 0 ]]; then
 				sqlconnect=1
