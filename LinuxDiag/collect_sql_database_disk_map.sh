@@ -27,28 +27,42 @@ while IFS='|' read -r db_name physical_name; do
 
         resolved=$(readlink -f -- "$actual_path" 2>/dev/null || echo "$actual_path")
         actual_path="$resolved"
-
+      
         df_output=$(df -T -- "$actual_path" | awk 'NR==2')
         fs_type=$(echo "$df_output" | awk '{print $2}')
-        device_mapper_path=$(echo "$df_output" | awk '{print $1}')
         mount_point=$(echo "$df_output" | awk '{print $7}')
+        mount_source=$(findmnt -no SOURCE "$mount_point")
+             
+        # Check if we are using LVM, LVM means we are using disk mapper
+        if sudo lvs &> /dev/null; then
+            using_lvm=1
+        else
+            using_lvm=0
+        fi
 
-        diskpartition=$(lvdisplay -m "$device_mapper_path" 2>/dev/null | awk '/Physical volume/ {print $3}')
-        [[ -z "$diskpartition" ]] && diskpartition="-"
-
-        DpoFua_sg_modes=$(sg_modes "$device_mapper_path" 2>/dev/null | grep -oE 'DpoFua=[01]' | sed 's/.*=//')
-        [[ -z "${DpoFua_sg_modes:-}" ]] && DpoFua_sg_modes="-"
+        # Get the diskpartition depending on if we are using LVM
+        if [[ $using_lvm -eq 1 ]]; then
+            #if we are using LVM then use lvdisplay to get the diskpartition
+            diskpartition=$(lvdisplay -m "$mount_source" 2>/dev/null | awk '/Physical volume/ {print $3}')
+            [[ -z "$diskpartition" ]] && diskpartition="-"
+        else
+            #if we are not using LVM, then its diskpartition already
+            diskpartition=$mount_source
+        fi
 
         disk=$(echo "$diskpartition" | sed -E 's|^/dev/||; s|(nvme[0-9]+n[0-9]+)p[0-9]+|\1|; s|([a-zA-Z]+)[0-9]+|\1|')
 
+        DpoFua_sg_modes=$(sg_modes "$diskpartition" 2>/dev/null | grep -oE 'DpoFua=[01]' | sed 's/.*=//')
+        [[ -z "${DpoFua_sg_modes:-}" ]] && DpoFua_sg_modes="-"
+
         DpoFua_sys_block=$(cat /sys/block/$disk/queue/fua)
 
-        data+=("$db_name|$actual_path|$fs_type|$DpoFua_sg_modes|$DpoFua_sys_block|$diskpartition|$disk|$device_mapper_path|$mount_point")
+        data+=("$db_name|$actual_path|$fs_type|$DpoFua_sg_modes|$DpoFua_sys_block|$diskpartition|$disk|$mount_point|$using_lvm")
 done < <($(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -h -1 -W -s '|' -Q "$QUERY" | grep -v '^$')
 
 
 # Define column headers dynamically
-columns=("Database" "Physical_Name" "Filesystem" "DpoFua(sg_modes)" "DpoFua(/sys/block/dev/queue/fua)" "Disk_Partition" "Disk" "Device-mapper path" "Mount" )
+columns=("Database" "Physical_Name" "Filesystem" "DpoFua(sg_modes)" "DpoFua(/sys/block/dev/queue/fua)" "Disk_Partition" "Disk" "Mount" "using_lvm")
 
 # Initialize max lengths array with header lengths
 declare -a max_lengths
