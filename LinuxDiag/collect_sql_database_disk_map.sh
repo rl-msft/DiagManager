@@ -29,12 +29,14 @@ while IFS='|' read -r db_name physical_name; do
         actual_path="$resolved"
       
         df_output=$(df -T -- "$actual_path" | awk 'NR==2')
-        fs_type=$(echo "$df_output" | awk '{print $2}')
+        FileSystem_type=$(echo "$df_output" | awk '{print $2}')
         mount_point=$(echo "$df_output" | awk '{print $7}')
+        #if using LVM then the mout_source will be mapper /dev/mapper/ubuntu--vg-ubuntu--lv, otherwise it will partition like /dev/sda3
         mount_source=$(findmnt -no SOURCE "$mount_point")
-             
-        # Check if we are using LVM, LVM means we are using disk mapper
-        if sudo lvs &> /dev/null; then
+        Block_type=$(lsblk -no TYPE "$mount_source")
+
+        # Check if we are using LVM, LVM means we are using disk mapper - avoid using lvs
+        if [[ $Block_type == "lvm" ]]; then
             using_lvm=1
         else
             using_lvm=0
@@ -57,7 +59,7 @@ while IFS='|' read -r db_name physical_name; do
 
         DpoFua_sys_block=$(cat /sys/block/$disk/queue/fua)
 
-        data+=("$db_name|$actual_path|$fs_type|$DpoFua_sg_modes|$DpoFua_sys_block|$diskpartition|$disk|$mount_point|$using_lvm")
+        data+=("$db_name|$actual_path|$FileSystem_type|$DpoFua_sg_modes|$DpoFua_sys_block|$diskpartition|$disk|$mount_point|$using_lvm")
 done < <($(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -h -1 -W -s '|' -Q "$QUERY" | grep -v '^$')
 
 
@@ -99,4 +101,3 @@ for row in "${data[@]}"; do
     done
     echo
 done
-      
