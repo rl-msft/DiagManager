@@ -2,7 +2,7 @@
 
 SQL_SERVER_NAME=${1}
 CONN_AUTH_OPTIONS=${2}
-        
+            
 QUERY=$'SET NOCOUNT ON;
 SELECT d.name AS db_name, mf.physical_name
 FROM sys.master_files AS mf
@@ -30,47 +30,59 @@ while IFS='|' read -r db_name physical_name; do
 
         df_output=$(df -T -- "$actual_path" | awk 'NR==2')
         fs_type=$(echo "$df_output" | awk '{print $2}')
-        fs=$(echo "$df_output" | awk '{print $1}')
+        device_mapper_path=$(echo "$df_output" | awk '{print $1}')
         mount_point=$(echo "$df_output" | awk '{print $7}')
 
-        dpofua=$(sg_modes "$fs" 2>/dev/null | grep -oE 'DpoFua=[01]' | sed 's/.*=//')
-        [[ -z "${dpofua:-}" ]] && dpofua="-"
+        diskpartition=$(lvdisplay -m "$device_mapper_path" 2>/dev/null | awk '/Physical volume/ {print $3}')
+        [[ -z "$diskpartition" ]] && diskpartition="-"
 
-        block_info=$(lsblk -no NAME,TYPE "$fs" 2>/dev/null | head -n 1)
-        block_device=$(echo "$block_info" | awk '{print $1}')
-        device_type=$(echo "$block_info" | awk '{print $2}')
-        [[ -z "$block_device" ]] && block_device="-"
-        [[ -z "$device_type" ]] && device_type="-"
+        DpoFua_sg_modes=$(sg_modes "$device_mapper_path" 2>/dev/null | grep -oE 'DpoFua=[01]' | sed 's/.*=//')
+        [[ -z "${DpoFua_sg_modes:-}" ]] && DpoFua_sg_modes="-"
 
-        disk=$(lvdisplay -m "$fs" 2>/dev/null | awk '/Physical volume/ {print $3}')
-        [[ -z "$disk" ]] && disk="-"
+        disk=$(echo "$diskpartition" | sed -E 's|^/dev/||; s|(nvme[0-9]+n[0-9]+)p[0-9]+|\1|; s|([a-zA-Z]+)[0-9]+|\1|')
 
-        data+=("$db_name|$actual_path|$mount_point|$fs_type|$dpofua|$fs|$device_type|$block_device|$disk")
+        DpoFua_sys_block=$(cat /sys/block/$disk/queue/fua)
+
+        data+=("$db_name|$actual_path|$fs_type|$DpoFua_sg_modes|$DpoFua_sys_block|$diskpartition|$disk|$device_mapper_path|$mount_point")
 done < <($(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -h -1 -W -s '|' -Q "$QUERY" | grep -v '^$')
 
-# Determine max widths
-max_db=8; max_path=13; max_mount=5; max_fs=10; max_dpofua=6; max_device=6; max_devtype=7; max_block=8; max_disk=4
-for row in "${data[@]}"; do
-IFS='|' read -r db path mount fs dpofua device devtype block disk <<< "$row"
-(( ${#db} > max_db )) && max_db=${#db}
-(( ${#path} > max_path )) && max_path=${#path}
-(( ${#mount} > max_mount )) && max_mount=${#mount}
-(( ${#fs} > max_fs )) && max_fs=${#fs}
-(( ${#dpofua} > max_dpofua )) && max_dpofua=${#dpofua}
-(( ${#device} > max_device )) && max_device=${#device}
-(( ${#devtype} > max_devtype )) && max_devtype=${#devtype}
-(( ${#block} > max_block )) && max_block=${#block}
-(( ${#disk} > max_disk )) && max_disk=${#disk}
+
+# Define column headers dynamically
+columns=("Database" "Physical_Name" "Filesystem" "DpoFua(sg_modes)" "DpoFua(/sys/block/dev/queue/fua)" "Disk_Partition" "Disk" "Device-mapper path" "Mount" )
+
+# Initialize max lengths array with header lengths
+declare -a max_lengths
+for i in "${!columns[@]}"; do
+    max_lengths[$i]=${#columns[$i]}
 done
 
-# Print header
-printf "%-${max_db}s %-${max_path}s %-${max_mount}s %-${max_fs}s %-${max_dpofua}s %-${max_device}s %-${max_devtype}s %-${max_block}s %-${max_disk}s\n" \
-"Database" "Physical_Name" "Mount" "Filesystem" "dpofua" "device" "DevType" "BlockDev" "Disk"
-printf "%s\n" "$(printf '%0.s-' $(seq 1 $((max_db + max_path + max_mount + max_fs + max_dpofua + max_device + max_devtype + max_block + max_disk + 9))))"
-
-# Print rows
+# Calculate max length for each column dynamically
 for row in "${data[@]}"; do
-IFS='|' read -r db path mount fs dpofua device devtype block disk <<< "$row"
-printf "%-${max_db}s %-${max_path}s %-${max_mount}s %-${max_fs}s %-${max_dpofua}s %-${max_device}s %-${max_devtype}s %-${max_block}s %-${max_disk}s\n" \
-"$db" "$path" "$mount" "$fs" "$dpofua" "$device" "$devtype" "$block" "$disk"
-done        
+    IFS='|' read -r -a fields <<< "$row"
+    for i in "${!fields[@]}"; do
+        (( ${#fields[$i]} > max_lengths[$i] )) && max_lengths[$i]=${#fields[$i]}
+    done
+done
+
+# Print header dynamically
+for i in "${!columns[@]}"; do
+    printf "%-${max_lengths[$i]}s " "${columns[$i]}"
+done
+echo
+
+# Print separator
+total_width=0
+for len in "${max_lengths[@]}"; do
+    total_width=$((total_width + len + 1))
+done
+printf '%*s\n' "$total_width" '' | tr ' ' '-'
+
+# Print rows dynamically
+for row in "${data[@]}"; do
+    IFS='|' read -r -a fields <<< "$row"
+    for i in "${!fields[@]}"; do
+        printf "%-${max_lengths[$i]}s " "${fields[$i]}"
+    done
+    echo
+done
+      
