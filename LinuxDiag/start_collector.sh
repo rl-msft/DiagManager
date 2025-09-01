@@ -482,17 +482,17 @@ mkdir -p $working_dir/output
 chmod a+w $working_dir/output
 cp pssdiag*.conf $working_dir/output
 echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
-echo -e "$(date -u +"%T %D") Executing PSSDiag on: ${HOSTNAME}"  >> $pssdiag_log
-echo -e "$(date -u +"%T %D") Scenario file used: ${scenario}" >> $pssdiag_log
-echo -e "$(date -u +"%T %D") Authentication mode used: ${authentication_mode}" >> $pssdiag_log
-echo -e "$(date -u +"%T %D") Working Directory: ${working_dir}" >> $pssdiag_log 
-echo -e "$(date -u +"%T %D") Output Directory: ${outputdir}" >> $pssdiag_log 
+echo "$(date -u +"%T %D") PSSDiag version: ${script_version}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Executing PSSDiag on: ${HOSTNAME}"  >> $pssdiag_log
+echo "$(date -u +"%T %D") Scenario file used: ${scenario}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Authentication mode used: ${authentication_mode}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Working Directory: ${working_dir}" >> $pssdiag_log 
+echo "$(date -u +"%T %D") Output Directory: ${outputdir}" >> $pssdiag_log 
 #get_host_instance_status
 echo "$(date -u +"%T %D") Host instance service installed? ${is_host_instance_service_installed}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Host instance service enabled? ${is_host_instance_service_enabled}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Host instance service active? ${is_host_instance_service_active}" >> $pssdiag_log
 #get_container_instance_status
-echo "$(date -u +"%T %D") Running on an Azure VM? $([ "$(cat /sys/devices/virtual/dmi/id/chassis_asset_tag 2>/dev/null)" = "7783-7084-3265-9085-8269-3286-77" ] && echo "yes" || echo "No")" >> $pssdiag_log
 echo "$(date -u +"%T %D") Docker installed? ${is_container_runtime_service_installed}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Docker service enabled? ${is_container_runtime_service_enabled}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Docker service active? ${is_container_runtime_service_active}" >> $pssdiag_log
@@ -501,9 +501,12 @@ echo "$(date -u +"%T %D") Using podman without docker engine? ${is_podman_sql_co
 echo "$(date -u +"%T %D") Running inside container? ${is_instance_inside_container_active}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Running inside WSL? ${is_host_instance_inside_wsl}" >> $pssdiag_log
 
-#Check script version
-echo "$(date -u +"%T %D") PSSDiag version: ${script_version}" >> $pssdiag_log
+#Check OS build info
+echo "$(date -u +"%T %D") Running on an Azure VM? $([ "$(cat /sys/devices/virtual/dmi/id/chassis_asset_tag 2>/dev/null)" = "7783-7084-3265-9085-8269-3286-77" ] && echo "yes" || echo "No")" >> $pssdiag_log
 echo "$(date -u +"%T %D") BASH_VERSION: ${BASH_VERSION}" >> $pssdiag_log
+echo "$(date -u +"%T %D") OS Distribution: $(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"') $(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')" >> $pssdiag_log
+echo "$(date -u +"%T %D") OS Kernel: $(uname -r)" >> $pssdiag_log
+
 echo -e "\x1B[2;34m============================================= Starting PSSDiag =============================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 
 
