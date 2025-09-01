@@ -75,7 +75,7 @@ get_host_instance_status()
 {
 	is_host_instance_service_installed="NO"
 	is_host_instance_service_enabled="NO"
-	is_host_instnace_service_active="NO"
+	is_host_instance_service_active="NO"
 
 	#Check if we are at host/systemd
 	if (echo "$(readlink /sbin/init)" | grep systemd >/dev/null 2>&1); then
@@ -87,9 +87,9 @@ get_host_instance_status()
 				is_host_instance_service_enabled="NO"
 			fi
 			if (systemctl -q is-active mssql-server); then
-				is_host_instnace_service_active="YES"
+				is_host_instance_service_active="YES"
 			else
-				is_host_instnace_service_active="NO"
+				is_host_instance_service_active="NO"
 			fi
 		else
 			is_host_instance_service_installed="NO"
@@ -172,7 +172,7 @@ get_servicemanager_and_sqlservicestatus()
 	#	systemctl is-active mssql-server >/dev/null 2>&1 && { sqlservicestatus="active"; servicemanager="systemd"; } || { sqlservicestatus="unknown"; servicemanager="unknown"; }
 	#fi
 	if [[ "${1}" == "host_instance" ]] && [[ "${is_host_instance_service_installed}" == "YES" ]]; then
-		if [[ ${is_host_instnace_service_active} == "YES" ]]; then
+		if [[ ${is_host_instance_service_active} == "YES" ]]; then
 			sqlservicestatus="active"
 			servicemanager="systemd"
 		else

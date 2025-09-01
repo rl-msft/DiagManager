@@ -187,7 +187,7 @@ fi
 
 #Capture sqlservr process info for host instance
 get_host_instance_status
-if [ "${is_host_instnace_service_active}" == "YES" ]; then
+if [ "${is_host_instance_service_active}" == "YES" ]; then
     pid=$(pgrep -P $(systemctl show --property MainPID --value mssql-server.service | head -n 1))
     echo -e "$(date -u +"%T %D") Collecting sqlservr process information for host instance : ${HOSTNAME}..." | tee -a $pssdiag_log
     infolog_filename=$outputdir/${HOSTNAME}_host_instance_${pid}_process.info
@@ -217,7 +217,7 @@ if [ "${is_container_runtime_service_active}" == "YES" ]; then
     echo "" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info 
 fi
 get_host_instance_status
-if [ "${is_host_instnace_service_active}" == "YES" ]; then
+if [ "${is_host_instance_service_active}" == "YES" ]; then
     echo "======host instance : mssql-server.service ======" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
     systemctl status mssql-server.service | head -n 11 >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
     echo "" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
