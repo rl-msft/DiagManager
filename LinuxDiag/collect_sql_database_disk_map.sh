@@ -105,6 +105,6 @@ done
 # Print footer
 printf "\n"
 printf "Legend:\n"
-printf "DpoFua(sg_modes)*: Device claims to support Force Unit Access (FUA)\n"
-printf "DpoFua(/sys/block/dev/queue/fua)**: the kernel Driver has enabled and actively using Force Unit Access (FUA) for this device\n\n"
+printf "DpoFua(sg_modes)*: Indicates whether the device reports support for Force Unit Access (FUA)\n"
+printf "DpoFua(/sys/block/dev/queue/fua)**: Indicates whether the kernel driver has enabled Force Unit Access (FUA) on the device\n\n"
 printf "if you see discrepancy check 'dmesg | grep -i fua' to see if the kernel logs indicate FUA was disabled for a reason\n"
