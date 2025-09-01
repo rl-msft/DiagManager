@@ -503,9 +503,9 @@ echo "$(date -u +"%T %D") Running inside WSL? ${is_host_instance_inside_wsl}" >>
 
 #Check OS build info
 echo "$(date -u +"%T %D") Running on an Azure VM? $([ "$(cat /sys/devices/virtual/dmi/id/chassis_asset_tag 2>/dev/null)" = "7783-7084-3265-9085-8269-3286-77" ] && echo "YES" || echo "NO")" >> $pssdiag_log
-echo "$(date -u +"%T %D") BASH_VERSION: ${BASH_VERSION}" >> $pssdiag_log
 echo "$(date -u +"%T %D") OS Distribution: $(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"') $(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')" >> $pssdiag_log
 echo "$(date -u +"%T %D") OS Kernel: $(uname -r)" >> $pssdiag_log
+echo "$(date -u +"%T %D") BASH_VERSION: ${BASH_VERSION}" >> $pssdiag_log
 
 echo -e "\x1B[2;34m============================================= Starting PSSDiag =============================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 
