@@ -64,7 +64,7 @@ done < <($(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $
 
 
 # Define column headers dynamically
-columns=("Database" "Physical_Name" "Filesystem" "DpoFua(sg_modes)" "DpoFua(/sys/block/dev/queue/fua)" "Disk_Partition" "Disk" "Mount" "using_lvm")
+columns=("Database" "Physical_Name" "Filesystem" "DpoFua(sg_modes)*" "DpoFua(/sys/block/dev/queue/fua)**" "Disk_Partition" "Disk" "Mount" "using_lvm")
 
 # Initialize max lengths array with header lengths
 declare -a max_lengths
@@ -101,3 +101,10 @@ for row in "${data[@]}"; do
     done
     echo
 done
+
+# Print footer
+printf "\n"
+printf "Legend:\n"
+printf "DpoFua(sg_modes)*: Device claims to support Force Unit Access (FUA)\n"
+printf "DpoFua(/sys/block/dev/queue/fua)**: the kernel Driver has enabled and actively using Force Unit Access (FUA) for this device\n\n"
+printf "if you see discrepancy check 'dmesg | grep -i fua' to see if the kernel logs indicate FUA was disabled for a reason\n"
