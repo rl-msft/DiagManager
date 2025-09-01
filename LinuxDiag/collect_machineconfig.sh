@@ -72,8 +72,8 @@ function capture_disk_info()
     cmd='df -T | awk '\''NR>1 && $1~/^\/dev\/sd[a-z][0-9]+$/ {print $1, $2}'\'' | while read fs type; do echo "Filesystem: $fs, Type: $type"; sg_modes -6 "$fs"; done'
     capture_system_info_command "Inspecting FUA support functionality as claimed by Disk, df -T ==> sg_modes" "$cmd"
     cmd='for d in /sys/block/sd*/queue/fua; do echo "cat $d"; cat "$d"; echo "----------------------"; done'
-    capture_system_info_command "Inspecting Kernel Driver FUA Status for each Disk, /sys/block/sd*/queue/fua" "$cmd"
     capture_system_info_command "Inspecting Kernel Driver FUA disable and enable entries in dmesg" "dmesg 2>/dev/null | grep -i fua"
+    capture_system_info_command "Inspecting Kernel Driver FUA Status for each Disk, /sys/block/sd*/queue/fua" "$cmd"
 	capture_system_info_command "Disk Space Information, df -TH" "df -TH 2>/dev/null"
     capture_system_info_command "Disk Space Information, fdisk -l" "fdisk -l 2>/dev/null"
     capture_system_info_command "/etc/fstab" "cat /etc/fstab 2>/dev/null"
