@@ -488,14 +488,15 @@ echo -e "$(date -u +"%T %D") Authentication mode used: ${authentication_mode}" >
 echo -e "$(date -u +"%T %D") Working Directory: ${working_dir}" >> $pssdiag_log 
 echo -e "$(date -u +"%T %D") Output Directory: ${outputdir}" >> $pssdiag_log 
 #get_host_instance_status
-echo "$(date -u +"%T %D") is there any host instance service installed? ${is_host_instance_service_installed}" >> $pssdiag_log
-echo "$(date -u +"%T %D") is host instance service enabled? ${is_host_instance_service_enabled}" >> $pssdiag_log
-echo "$(date -u +"%T %D") is host instance service active? ${is_host_instnace_service_active}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Is there any host instance service installed? ${is_host_instance_service_installed}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Is host instance service enabled? ${is_host_instance_service_enabled}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Is host instance service active? ${is_host_instance_service_active}" >> $pssdiag_log
 #get_container_instance_status
-echo "$(date -u +"%T %D") is Docker installed? ${is_container_runtime_service_installed}" >> $pssdiag_log
-echo "$(date -u +"%T %D") is Docker service enabled? ${is_container_runtime_service_enabled}" >> $pssdiag_log
-echo "$(date -u +"%T %D") is Docker service active? ${is_container_runtime_service_active}" >> $pssdiag_log
-echo "$(date -u +"%T %D") is using podamn without docker engine? ${is_podman_sql_containers}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Is this an Azure VM? $([ "$(cat /sys/devices/virtual/dmi/id/chassis_asset_tag 2>/dev/null)" = "7783-7084-3265-9085-8269-3286-77" ] && echo "yes" || echo "No")" >> $pssdiag_log
+echo "$(date -u +"%T %D") Is Docker installed? ${is_container_runtime_service_installed}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Is Docker service enabled? ${is_container_runtime_service_enabled}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Is Docker service active? ${is_container_runtime_service_active}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Is using podman without docker engine? ${is_podman_sql_containers}" >> $pssdiag_log
 #pssdiag_inside_container_get_instance_status
 echo "$(date -u +"%T %D") Are we running inside container? ${is_instance_inside_container_active}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Are we running inside WSL? ${is_host_instance_inside_wsl}" >> $pssdiag_log
