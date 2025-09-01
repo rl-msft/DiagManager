@@ -68,7 +68,8 @@ function capture_disk_info()
     capture_system_info_command "Disk Information, lshw -class disk" "lshw -class disk"
 	capture_system_info_command "Disk blockdev report Information" "blockdev --report 2>/dev/null"
 	capture_system_info_command "Disk Information, lsblk" "lsblk -o NAME,MAJ:MIN,FSTYPE,MOUNTPOINT,PARTLABEL,SIZE,ALIGNMENT,PHY-SEC,LOG-SEC,MIN-IO,OPT-IO,ROTA,TYPE,RQ-SIZE,LABEL,MODEL,REV,VENDOR 2>/dev/null" 
-    cmd='df -T | awk '\''NR>1 && ($2 == "xfs" || $2 == "ext4") {print $1, $2}'\'' | while read fs type; do echo "Filesystem: $fs, Type: $type"; sg_modes_output=$(sg_modes -6 "$fs"); echo "$sg_modes_output"; done'
+    #cmd='df -T | awk '\''NR>1 && ($2 == "xfs" || $2 == "ext4") {print $1, $2}'\'' | while read fs type; do echo "Filesystem: $fs, Type: $type"; sg_modes_output=$(sg_modes -6 "$fs"); echo "$sg_modes_output"; done'
+    cmd='df -T | awk '\''NR>1 && ($2=="xfs" || $2=="ext4") && $1~/^\/dev\/sd[a-z][0-9]+$/ {print $1, $2}'\'' | while read fs type; do echo "Filesystem: $fs, Type: $type"; sg_modes -6 "$fs"; done'
     capture_system_info_command "Inspecting Disk FUA Support, df and sg_modes" "$cmd"
     cmd='for d in /sys/block/sd*/queue/fua; do echo "cat $d"; cat "$d"; echo "----------------------"; done'
     capture_system_info_command "Inspecting Kernel Driver FUA Status for each Disk, /sys/block/sd*/queue/fua" "$cmd"
