@@ -483,6 +483,7 @@ mkdir -p $working_dir/output
 chmod a+w $working_dir/output
 cp pssdiag*.conf $working_dir/output
 echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+echo "$(date -u +"%T %D") PSSDiag Executed with sudo: $([ -n "$SUDO_USER" ] && echo "YES" || echo "NO")" >> $pssdiag_log
 echo "$(date -u +"%T %D") PSSDiag version: ${script_version}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Executing PSSDiag on: ${HOSTNAME}"  >> $pssdiag_log
 echo "$(date -u +"%T %D") Scenario file used: ${scenario}" >> $pssdiag_log
