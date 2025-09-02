@@ -56,7 +56,7 @@ if [ "${is_container_runtime_service_active}" == "YES" ]; then
         do
         	dockername=$(docker inspect -f "{{.Name}}" $dockerid | tail -c +2)
                 echo -e "$(date -u +"%T %D") Collecting docker logs for container instance $dockername: ..." | tee -a $pssdiag_log
-		docker logs $dockerid >> $outputdir/${dockername}_container_instance_docker_logs.out
+		docker logs $dockerid >> $outputdir/${dockername}_container_instance_docker_logs.out > /dev/null 2>&1
         done;
 fi
 
@@ -86,6 +86,6 @@ if [[ ${is_podman_sql_containers} = "YES" ]]; then
         do
         	podmanname=$(podman inspect -f "{{.Name}}" $podmanid | tail -c +1)
                 echo -e "$(date -u +"%T %D") Collecting docker logs for container instance $podmanname: ..." | tee -a $pssdiag_log
-		podman logs $podmanid >> $outputdir/${podmanname}_container_instance_podman_logs.out
+		podman logs $podmanid >> $outputdir/${podmanname}_container_instance_podman_logs.out > /dev/null 2>&1
         done;
 fi

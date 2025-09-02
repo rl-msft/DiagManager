@@ -57,17 +57,23 @@ docker_has_loggerini=$(docker exec --user root ${dockername} sh -c "(ls /var/opt
 
 if [[ "${docker_has_loggerini}" == "YES" ]]; then
 	echo -e "$(date -u +"%T %D") Collecting pal logs from container : $dockername..." | tee -a $pssdiag_log
-	PAL_LOG=$(get_docker_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' '/var/opt/mssql/log/security.log' $dockername)
-	PAL_LOG_DIR=$(dirname $PAL_LOG)
-	PAL_LOG=$(basename $PAL_LOG)
-
-	if hash bzip2 2>/dev/null; then
-		docker exec $dockerid sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | bzip2 > $outputdir/${dockername}_container_instance_pal_logs.bz2
-	else
-		docker exec $dockerid sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | $outputdir/${dockername}_container_instance_pal_logs.tar
+	result=$(get_docker_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA' $dockername)
+	if [ "$result" = "NA" ]; then
+		result=$(get_docker_conf_optionx '/var/opt/mssql/logger.ini' 'Output.sql' 'filename' 'NA' $dockername)
 	fi
-else
-	echo -e "$(date -u +"%T %D") Container ${dockername} has no pal logs : $dockername... " | tee -a $pssdiag_log
+	if [ "${result}" != "NA" ]; then
+		PAL_LOG="${result}"
+		PAL_LOG_DIR=$(dirname $PAL_LOG)
+		PAL_LOG=$(basename $PAL_LOG)
+
+		if hash bzip2 2>/dev/null; then
+			docker exec $dockerid sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | bzip2 > $outputdir/${dockername}_container_instance_pal_logs.bz2
+		else
+			docker exec $dockerid sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | $outputdir/${dockername}_container_instance_pal_logs.tar
+		fi
+	else
+		echo -e "$(date -u +"%T %D") logger.ini maybe malformed, skipping pal log collection for container : ${dockername}... " | tee -a $pssdiag_log
+	fi
 fi
 
 #Collect mssql.conf, this one we need to echo out before collection as info about this container
@@ -189,20 +195,27 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 		#Collecting pal logs 
 		if [ -e "/var/opt/mssql/logger.ini" ]; then
 			echo -e "$(date -u +"%T %D") Collecting pal logs from host instance : ${HOSTNAME}..." | tee -a $pssdiag_log
-			PAL_LOG=$(get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' '/var/opt/mssql/log/security.log' | cut -f 1 -d '.')
-			PAL_LOG_DIR=$(dirname $PAL_LOG)
-			PAL_LOG=$(basename $PAL_LOG)
-			if [ -d "$PAL_LOG_DIR" ]; then
-#			sh -c 'tar -cjf "$0/$3_host_instance_pal_logs_$1.tar.bz2" $2/$4* --ignore-failed-read --absolute-names 2>/dev/null' "$outputdir" "$NOW" "$PAL_LOG_DIR" "$HOSTNAME" "$PAL_LOG"				
-				if hash bzip2 2>/dev/null; then
-					current_dir="$PWD"
-					sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | bzip2 > $outputdir/${HOSTNAME}_host_instance_pal_logs.bz2
-					cd ${current_dir}
-				else
-					current_dir="$PWD"
-					sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | $outputdir/${HOSTNAME}_host_instance_pal_logs.tar
-					cd ${current_dir}
+			result=$(get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA')
+			if [ "$result" = "NA" ]; then
+				result=$(get_conf_optionx '/var/opt/mssql/logger.ini' 'Output.sql' 'filename' 'NA')
+			fi
+			if [ "${result}" != "NA" ]; then
+				PAL_LOG="${result}"
+				PAL_LOG_DIR=$(dirname $PAL_LOG)
+				PAL_LOG=$(basename $PAL_LOG)
+				if [ -d "$PAL_LOG_DIR" ]; then
+					if hash bzip2 2>/dev/null; then
+						current_dir="$PWD"
+						sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | bzip2 > $outputdir/${HOSTNAME}_instance_pal_logs.bz2
+						cd ${current_dir}
+					else
+						current_dir="$PWD"
+						sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | $outputdir/${HOSTNAME}_host_instance_pal_logs.tar
+						cd ${current_dir}
+					fi
 				fi
+			else
+				echo -e "$(date -u +"%T %D") logger.ini maybe malformed, skipping pal log collection for host instance : ${HOSTNAME}... " | tee -a $pssdiag_log
 			fi
 		fi
 			
@@ -261,19 +274,27 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 		#Collecting pal logs 
 		if [ -e "/var/opt/mssql/logger.ini" ]; then
 			echo -e "$(date -u +"%T %D") Collecting pal logs from instance : ${HOSTNAME}..." | tee -a $pssdiag_log
-			PAL_LOG=$(get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' '/var/opt/mssql/log/security.log' | cut -f 1 -d '.')
-			PAL_LOG_DIR=$(dirname $PAL_LOG)
-			PAL_LOG=$(basename $PAL_LOG)
-			if [ -d "$PAL_LOG_DIR" ]; then
-				if hash bzip2 2>/dev/null; then
-					current_dir="$PWD"
-					sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | bzip2 > $outputdir/${HOSTNAME}_instance_pal_logs.bz2
-					cd ${current_dir}
-				else
-					current_dir="$PWD"
-					sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | $outputdir/${HOSTNAME}_host_instance_pal_logs.tar
-					cd ${current_dir}
+			result=$(get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA')
+			if [ "$result" = "NA" ]; then
+				result=$(get_conf_optionx '/var/opt/mssql/logger.ini' 'Output.sql' 'filename' 'NA')
+			fi
+			if [ "${result}" != "NA" ]; then
+				PAL_LOG="${result}"
+				PAL_LOG_DIR=$(dirname $PAL_LOG)
+				PAL_LOG=$(basename $PAL_LOG)
+				if [ -d "$PAL_LOG_DIR" ]; then
+					if hash bzip2 2>/dev/null; then
+						current_dir="$PWD"
+						sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | bzip2 > $outputdir/${HOSTNAME}_instance_pal_logs.bz2
+						cd ${current_dir}
+					else
+						current_dir="$PWD"
+						sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | $outputdir/${HOSTNAME}_host_instance_pal_logs.tar
+						cd ${current_dir}
+					fi
 				fi
+			else
+				echo -e "$(date -u +"%T %D") logger.ini maybe malformed, skipping pal log collection for instance : ${HOSTNAME}... " | tee -a $pssdiag_log
 			fi
 		fi
 			

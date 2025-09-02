@@ -377,7 +377,7 @@ echo ${result:-$4} | tee -a $pssdiag_log
 
 #get_conf_optionx '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent'
 #get_conf_optionx '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog'
-#get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' '/var/opt/mssql/log/security.log'
+#get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA' 
 get_conf_optionx()
 {
 unset result
@@ -399,8 +399,11 @@ while IFS= read -r line; do
 		break 
 	fi
 done < $1
+
 if [ "${result}" ]; then
 	echo "$(date -u +"%T %D") Host instance ${HOSTNAME} conf file ${1} setting option [${2}] ${3} is set to : ${result}">>$pssdiag_log
+elif [ "${4}" == "NA" ]; then
+	echo "$(date -u +"%T %D") Host instance ${HOSTNAME} conf file ${1} setting option [${2}] ${3} is not set in the conf file, no default for this setting">>$pssdiag_log
 else
 	echo "$(date -u +"%T %D") Host instance ${HOSTNAME} conf file ${1} setting option [${2}] ${3} is not set in the conf file, using the default : ${4}">>$pssdiag_log
 fi
@@ -409,7 +412,7 @@ echo ${result:-$4}
 
 #get_conf_optionx '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent' 'dockername'
 #get_conf_optionx '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog' 'dockername'
-#get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' '/var/opt/mssql/log/security.log' 'dockername'
+#get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA' 'dockername'
 get_docker_conf_optionx()
 {
 unset result
@@ -440,6 +443,8 @@ done < "$tmpcontainertmpfile"
 rm "$tmpcontainertmpfile"
 if [ "${result}" ]; then
 	echo "$(date -u +"%T %D") Container instance ${5} conf file ${1} setting option [${2}] ${3} is set to : ${result}">>$pssdiag_log
+elif [ "${4}" == "NA" ]; then
+	echo "$(date -u +"%T %D") Container instance ${5} conf file ${1} setting option [${2}] ${3} is not set in the conf file, no default for this setting">>$pssdiag_log
 else
 	echo "$(date -u +"%T %D") Container instance ${5} conf file ${1} setting option [${2}] ${3} is not set in the conf file, using the default : ${4}">>$pssdiag_log
 fi
