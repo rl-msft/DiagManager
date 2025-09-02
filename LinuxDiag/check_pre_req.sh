@@ -10,6 +10,7 @@
 source ./pssdiag_support_functions.sh
 
 pssdiag_log="$outputdir/pssdiag.log"
+find_sqlcmd
 
 echo -e "Starting pre-req checks..."  
 
@@ -112,7 +113,7 @@ fi
 
 # check if sqlcmd is installed, we need this to execute TSQL scripts [for future we need to expand or make generic to use any available sql command line tool]
 check_sqlcmd="0"
-if [[ ! -f $(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1 2>/dev/null) ]] && [[ "$PRE_CHECK_SQL" == "YES" ]] ; then
+if [[ $SQLCMD == "" ]] && [[ "$PRE_CHECK_SQL" == "YES" ]] ; then
 	echo -e "\x1B[31mThe program sqlcmd from mssql-tools18 package is not installed on this system and is required for the data collection." 
 	check_sqlcmd="0"
 else

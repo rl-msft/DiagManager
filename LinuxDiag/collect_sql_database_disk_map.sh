@@ -1,5 +1,19 @@
 #!/bin/bash
 
+find_sqlcmd() 
+{
+	SQLCMD=""
+	# Try known sqlcmd paths in order
+	if [ -x /opt/mssql-tools/bin/sqlcmd ]; then
+		SQLCMD="/opt/mssql-tools/bin/sqlcmd"
+	elif [ -x /opt/mssql-tools18/bin/sqlcmd ]; then
+		SQLCMD="/opt/mssql-tools18/bin/sqlcmd"
+	else
+		SQLCMD=""
+	fi
+}
+
+
 SQL_SERVER_NAME=${1}
 CONN_AUTH_OPTIONS=${2}
             
@@ -8,6 +22,8 @@ SELECT d.name AS db_name, mf.physical_name
 FROM sys.master_files AS mf
 JOIN sys.databases AS d ON d.database_id = mf.database_id
 ORDER BY d.name, mf.file_id;'
+
+find_sqlcmd
 
 # Collect data into an array
 data=()
@@ -60,7 +76,7 @@ while IFS='|' read -r db_name physical_name; do
         DpoFua_sys_block=$(cat /sys/block/$disk/queue/fua)
 
         data+=("$db_name|$actual_path|$FileSystem_type|$DpoFua_sg_modes|$DpoFua_sys_block|$diskpartition|$disk|$mount_point|$using_lvm")
-done < <($(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -h -1 -W -s '|' -Q "$QUERY" | grep -v '^$')
+done < <("$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -h -1 -W -s '|' -Q "$QUERY" | grep -v '^$')
 
 
 # Define column headers dynamically

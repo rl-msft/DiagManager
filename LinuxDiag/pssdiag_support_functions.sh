@@ -20,6 +20,18 @@ function capture_system_info_command()
     echo "" >> $infolog_filename
 }
 
+find_sqlcmd() 
+{
+	SQLCMD=""
+	# Try known sqlcmd paths in order
+	if [ -x /opt/mssql-tools/bin/sqlcmd ]; then
+		SQLCMD="/opt/mssql-tools/bin/sqlcmd"
+	elif [ -x /opt/mssql-tools18/bin/sqlcmd ]; then
+		SQLCMD="/opt/mssql-tools18/bin/sqlcmd"
+	else
+		SQLCMD=""
+	fi
+}
 
 get_sql_listen_port()
 {
@@ -213,7 +225,7 @@ sql_connect()
 	MAX_ATTEMPTS=3
 	attempt_num=1
 	sqlconnect=0
-
+	find_sqlcmd
 	get_servicemanager_and_sqlservicestatus ${1} ${2}
 	
 	if [[ "${sqlservicestatus}" == "unknown" ]]; then
@@ -271,12 +283,12 @@ sql_connect()
 			#prompt for credentials for SQL authentication
 			read -r -p $'\e[1;34mEnter SQL UserName: \e[0m' XsrX
 			read -s -r -p $'\e[1;34mEnter User Password: \e[0m' XssX
-			$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME -U$XsrX -P$XssX -C -Q"select @@version" 2>&1 >/dev/null
+			"$SQLCMD" -S$SQL_SERVER_NAME -U$XsrX -P$XssX -C -Q"select @@version" 2>&1 >/dev/null
 			if [[ $? -eq 0 ]]; then
 				sqlconnect=1
 				echo ""
 				echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | tee -a $pssdiag_log
-				sql_ver=$($(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME -U$XsrX -P$XssX -C -Q"PRINT CONVERT(NVARCHAR(128), SERVERPROPERTY('ProductVersion'))")
+				sql_ver=$("$SQLCMD" -S$SQL_SERVER_NAME -U$XsrX -P$XssX -C -Q"PRINT CONVERT(NVARCHAR(128), SERVERPROPERTY('ProductVersion'))")
 				echo "$(date -u +"%T %D") SQL Server version  ${sql_ver}" >> $pssdiag_log
 				CONN_AUTH_OPTIONS="-U$XsrX -P$XssX"
 				break
@@ -294,12 +306,12 @@ sql_connect()
 		if [ ${1} == "host_instance" ]; then
 			SQL_SERVER_NAME="${HOSTNAME},${3}"
 		fi
-		$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME -E -C -Q"select @@version" 2>&1 >/dev/null
+		"$SQLCMD" -S$SQL_SERVER_NAME -E -C -Q"select @@version" 2>&1 >/dev/null
     	if [[ $? -eq 0 ]]; then   	
 			sqlconnect=1;
 			CONN_AUTH_OPTIONS='-E'
 			echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | tee -a $pssdiag_log
-			sql_ver=$($(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME -E -C -Q"PRINT CONVERT(NVARCHAR(128), SERVERPROPERTY('ProductVersion'))")
+			sql_ver=$("$SQLCMD" -S$SQL_SERVER_NAME -E -C -Q"PRINT CONVERT(NVARCHAR(128), SERVERPROPERTY('ProductVersion'))")
 			echo "$(date -u +"%T %D") SQL Server version  ${sql_ver}" >> $pssdiag_log
 		else
 			#in case AD Authentication fails, try again using SQL Authentication for this particular instance 

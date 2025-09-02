@@ -6,6 +6,20 @@
 # VERSION="1.0 (2025-09-01)"
 # =============================================================================
 
+find_sqlcmd() 
+{
+	SQLCMD=""
+	# Try known sqlcmd paths in order
+	if [ -x /opt/mssql-tools/bin/sqlcmd ]; then
+		SQLCMD="/opt/mssql-tools/bin/sqlcmd"
+	elif [ -x /opt/mssql-tools18/bin/sqlcmd ]; then
+		SQLCMD="/opt/mssql-tools18/bin/sqlcmd"
+	else
+		SQLCMD=""
+	fi
+}
+
+
 TITLE="SQL on Linux known issues analyzer"
 VERSION="1.0 Beta"
 
@@ -13,6 +27,8 @@ SQL_SERVER_NAME=${1}
 CONN_AUTH_OPTIONS=${2}
 
 knownIssuesCount=0
+
+find_sqlcmd
 
 # -----------------------------------------------------------------------------
 # Environment discovery
@@ -38,7 +54,7 @@ Condition2_tf3979=99
 REPL_QUERY=$'SET NOCOUNT ON;select 1 from sys.databases where is_published = 1 or is_subscribed = 1 or is_merge_published = 1 or is_distributor = 1'
 
 # Validate Condition 1
-if [[ $("$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1)" -S"$SQL_SERVER_NAME" $CONN_AUTH_OPTIONS -C -h -1 -W -Q "${REPL_QUERY}") == 1 ]]; then
+if [[ $("$SQLCMD" -S"$SQL_SERVER_NAME" $CONN_AUTH_OPTIONS -C -h -1 -W -Q "${REPL_QUERY}") == 1 ]]; then
     Condition1_Replication=1
 else
     Condition1_Replication=0

@@ -10,14 +10,14 @@ sql_collect_perfstats()
         if [[ $COLLECT_PERFSTATS == [Yy][eE][sS] ]] ; then
                 #Start regular PerfStats script as a background job
                 echo -e "$(date -u +"%T %D") Starting SQL Perf Stats script as a background job...." | tee -a $pssdiag_log
-                `$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Perf_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Perf_Stats.out"` &
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Perf_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Perf_Stats.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.txt
 		sleep 5s
                 pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.txt
 
 				echo -e "$(date -u +"%T %D") Starting SQL Linux Stats script as a background job...." | tee -a $pssdiag_log
-                `$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Linux_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Stats.out"` &
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Linux_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Stats.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.txt
 		sleep 5s
@@ -32,7 +32,7 @@ sql_collect_counters()
                 #Replace Interval with SED
                 sed -i'' -e"2s/.*/SET @SQL_COUNTER_INTERVAL = $SQL_COUNTERS_INTERVAL/g" SQL_Performance_Counters.sql
                 echo -e "$(date -u +"%T %D") Starting SQL Performance counter script as a background job.... " | tee -a $pssdiag_log
-                `$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Performance_Counters.sql" -o"$outputdir/${1}_${2}_SQL_Performance_Counters.out"` &
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Performance_Counters.sql" -o"$outputdir/${1}_${2}_SQL_Performance_Counters.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.txt
 		sleep 5s
@@ -46,7 +46,7 @@ sql_collect_memstats()
         if [[ $COLLECT_SQL_MEM_STATS == [Yy][eE][sS] ]] ; then
                 #Start SQL Memory Status script as a background job
                 echo -e "$(date -u +"%T %D") Starting SQL Memory Status script as a background job.... " | tee -a $pssdiag_log
-                `$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Mem_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Mem_Stats.out"` &
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Mem_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Mem_Stats.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.txt
 		sleep 5s
@@ -60,7 +60,7 @@ sql_collect_custom()
                 #Start Custom Collector  scripts as a background job
                 echo -e "$(date -u +"%T %D") Starting SQL Custom Collector Scripts as a background job.... " | tee -a $pssdiag_log
                 for filename in my_custom_collector*.sql; do
-                   `$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"${filename}" -o"$outputdir/${1}_${2}_${filename}_Output.out"` &
+                   `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"${filename}" -o"$outputdir/${1}_${2}_${filename}_Output.out"` &
                     mypid=$!
                     #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.txt
 		    sleep 5s
@@ -74,14 +74,14 @@ sql_collect_xevent()
         #start any XE collection if defined? XE file should be named pssdiag_xevent_.sql.
         if [[ $COLLECT_EXTENDED_EVENTS == [Yy][eE][sS]  ]]; then
                 echo -e "$(date -u +"%T %D") Starting SQL Extended Events collection...  " | tee -a $pssdiag_log
-                $(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1)  -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"${EXTENDED_EVENT_TEMPLATE}.sql" -o"$outputdir/${1}_${2}_pssdiag_xevent.out"
+                "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"${EXTENDED_EVENT_TEMPLATE}.sql" -o"$outputdir/${1}_${2}_pssdiag_xevent.out"
                 cp -f ./pssdiag_xevent_start.template ./pssdiag_xevent_start.sql
 		if [[ "$2" == "host_instance" ]] || [[ "$2" == "instance" ]]; then
 	                sed -i "s|##XeFileName##|${outputdir}/${1}_${2}_pssdiag_xevent.xel|" pssdiag_xevent_start.sql
 		else
                     sed -i "s|##XeFileName##|/var/opt/mssql/log/${1}_${2}_pssdiag_xevent.xel|" pssdiag_xevent_start.sql
 		fi
-                /$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_xevent_start.sql" -o"$outputdir/${1}_${2}_pssdiag_xevent_start.out"
+                "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_xevent_start.sql" -o"$outputdir/${1}_${2}_pssdiag_xevent_start.out"
         fi
 }
 
@@ -90,7 +90,7 @@ sql_collect_trace()
         #start any SQL trace collection if defined? 
         if [[ $COLLECT_SQL_TRACE == [Yy][eE][sS]  ]]; then
 		echo -e "$(date -u +"%T %D") Creating helper stored procedures in tempdb from MSDiagprocs.sql" >> $pssdiag_log
-		$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1)  -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"MSDiagProcs.sql" -o"$outputdir/${1}_${2}_MSDiagprocs.out"
+		"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"MSDiagProcs.sql" -o"$outputdir/${1}_${2}_MSDiagprocs.out"
                 echo -e "$(date -u +"%T %D") Starting SQL trace collection...  " | tee -a $pssdiag_log
                 cp -f ./${SQL_TRACE_TEMPLATE}.template ./pssdiag_trace_start.sql
 		if [[ "$2" == "host_instance" ]]; then
@@ -98,7 +98,7 @@ sql_collect_trace()
 		else
 			sed -i "s|##TraceFileName##|/var/opt/mssql/log/${1}_${2}_pssdiag_trace|" pssdiag_trace_start.sql
 		fi
-		$(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_trace_start.sql" -o"$outputdir/${1}_${2}_pssdiag_trace_start.out"
+		"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_trace_start.sql" -o"$outputdir/${1}_${2}_pssdiag_trace_start.out"
         fi
 }
 
@@ -106,19 +106,19 @@ sql_collect_config()
 {
         #include whatever base collector scripts exist here
         echo -e "$(date -u +"%T %D") Collecting SQL Configuration information at startup..." | tee -a $pssdiag_log
-        $(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Configuration.sql" -o"$outputdir/${1}_${2}_SQL_Configuration_Startup.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Configuration.sql" -o"$outputdir/${1}_${2}_SQL_Configuration_Startup.out"
 }
 
 sql_collect_linux_snapshot()
 {
         echo -e "$(date -u +"%T %D") Collecting SQL Linux Snapshot at Startup..." | tee -a $pssdiag_log
-        $(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Linux_Snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Snapshot_Startup.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Linux_Snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Snapshot_Startup.out"
 }
 
 sql_collect_perfstats_snapshot()
 {
         echo -e "$(date -u +"%T %D") Collecting SQL Perf Stats Snapshot at Startup..." | tee -a $pssdiag_log
-        $(ls -1 /opt/mssql-tools*/bin/sqlcmd | tail -n -1) -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Perf_Stats_Snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Perf_Stats_Snapshot_Startup.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Perf_Stats_Snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Perf_Stats_Snapshot_Startup.out"
 }
 
 # end of all function definitions
@@ -132,6 +132,7 @@ get_host_instance_status
 get_container_instance_status
 pssdiag_inside_container_get_instance_status
 get_wsl_instance_status
+find_sqlcmd
 
 # check if user passed any parameter to the script 
 scenario=${1,,}
