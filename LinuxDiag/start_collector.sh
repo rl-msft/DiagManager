@@ -454,6 +454,19 @@ fi
 
 	echo -e "\x1B[2;34m========================================== Checking Prerequisites ==========================================\x1B[0m" 
 
+
+#Check if we run with SUDO
+[ -z "$SUDO_USER" ] && {
+  echo -e "\e[31mWarning: PSSDiag was executed without elevated (sudo) privileges. OS-level and SQL Server log collectors will be unable to execute. Only T-SQL based data collection will be able to execute.\e[0m"
+  read -p "Do you want to continue anyway? (y/n): " choice
+  case "$choice" in
+    y|Y ) ;;
+    n|N ) exit 1;;
+    * ) exit 1;;
+  esac
+}
+
+
 # check if we have all pre-requisite to perform data collection
 ./check_pre_req.sh $COLLECT_SQL $COLLECT_OS_COUNTERS $scenario $authentication_mode
 if [[ $? -ne 0 ]] ; then
