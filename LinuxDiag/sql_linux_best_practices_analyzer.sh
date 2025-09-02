@@ -13,11 +13,11 @@
 # https://learn.microsoft.com/en-us/sql/linux/sql-server-linux-performance-best-practices?view=sql-server-ver17
 #
 # This script DOES NOT modify the system.
-# VERSION="1.7 (2025-09-01)"
+# VERSION="1.0 (2025-09-01)"
 # =============================================================================
 
 TITLE="SQL on Linux best practice analyzer"
-VERSION="1.7"
+VERSION="1.0 Beta"
 GREEN="\e[32m"; YELLOW="\e[33m"; RED="\e[31m"; NC="\e[0m"
 pass(){ echo -e "${GREEN}PASS${NC} - $*"; }
 warn(){ echo -e "${YELLOW}WARN${NC} - $*"; }

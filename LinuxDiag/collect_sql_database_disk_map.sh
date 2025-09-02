@@ -27,8 +27,8 @@ while IFS='|' read -r db_name physical_name; do
 
         resolved=$(readlink -f -- "$actual_path" 2>/dev/null || echo "$actual_path")
         actual_path="$resolved"
-      
-        df_output=$(df -T -- "$actual_path" | awk 'NR==2')
+
+        df_output=$(df -T -- "$actual_path" 2>&1 > /dev/null | awk 'NR==2')
         FileSystem_type=$(echo "$df_output" | awk '{print $2}')
         mount_point=$(echo "$df_output" | awk '{print $7}')
         #if using LVM then the mout_source will be mapper /dev/mapper/ubuntu--vg-ubuntu--lv, otherwise it will partition like /dev/sda3

@@ -337,6 +337,9 @@ fi
 if [[ "$COLLECT_SQL_BEST_PRACTICES" == "YES" ]]; then
 	echo -e "$(date -u +"%T %D") Collecting SQL Linux Best Practices Analyzer..." | tee -a $pssdiag_log
         ./sql_linux_best_practices_analyzer.sh --explain-all >> $outputdir/${HOSTNAME}_SQL_Linux_Best_Practice_Analyzer.out
+
+        echo -e "$(date -u +"%T %D") Collecting SQL Linux Known issues Analyzer..." | tee -a $pssdiag_log
+        ./sql_linux_known_issues_analyzer.sh "$SQL_SERVER_NAME" "$CONN_AUTH_OPTIONS" >> $outputdir/${HOSTNAME}_SQL_Linux_Known_Issues_Analyzer.out
 fi
 
 echo -e "\x1B[2;34m=======================================  Creating Compressed Archive =======================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
