@@ -153,6 +153,9 @@ infolog_filename=$outputdir/${HOSTNAME}_os_machine_config.info
 echo -e "$(date -u +"%T %D") Collecting host configuration..." | tee -a $pssdiag_log
 capture_system_info
 
+#workaround NexusLinuxImporter
+cp $infolog_filename $outputdir/${HOSTNAME}_machineconfig.info
+
 #Capture Network info
 infolog_filename=$outputdir/${HOSTNAME}_os_network.info
 echo -e "$(date -u +"%T %D") Collecting TCP/IP information and resolv.conf..." | tee -a $pssdiag_log
