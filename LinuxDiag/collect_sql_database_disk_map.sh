@@ -16,14 +16,14 @@ find_sqlcmd()
 
 SQL_SERVER_NAME=${1}
 CONN_AUTH_OPTIONS=${2}
-            
+
 QUERY=$'SET NOCOUNT ON;
 SELECT d.name AS db_name, mf.physical_name
 FROM sys.master_files AS mf
 JOIN sys.databases AS d ON d.database_id = mf.database_id
 ORDER BY d.name, mf.file_id;'
 
-find_sqlcmd
+find_sqlcmd		   
 
 # Collect data into an array
 data=()
@@ -38,13 +38,13 @@ while IFS='|' read -r db_name physical_name; do
         elif [[ -e "$lower_path" ]]; then
                 actual_path="$lower_path"
         else
-                actual_path="$physical_name (missing)"
+                actual_path="$physical_name (unresolve)"
         fi
 
         resolved=$(readlink -f -- "$actual_path" 2>/dev/null || echo "$actual_path")
         actual_path="$resolved"
 
-        df_output=$(df -T -- "$actual_path" 2>&1 > /dev/null | awk 'NR==2')
+        df_output=$(df -T -- "$actual_path" 2>/dev/null | awk 'NR==2')
         FileSystem_type=$(echo "$df_output" | awk '{print $2}')
         mount_point=$(echo "$df_output" | awk '{print $7}')
         #if using LVM then the mout_source will be mapper /dev/mapper/ubuntu--vg-ubuntu--lv, otherwise it will partition like /dev/sda3
@@ -76,6 +76,7 @@ while IFS='|' read -r db_name physical_name; do
         DpoFua_sys_block=$(cat /sys/block/$disk/queue/fua)
 
         data+=("$db_name|$actual_path|$FileSystem_type|$DpoFua_sg_modes|$DpoFua_sys_block|$diskpartition|$disk|$mount_point|$using_lvm")
+
 done < <("$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -h -1 -W -s '|' -Q "$QUERY" | grep -v '^$')
 
 
@@ -123,4 +124,5 @@ printf "\n"
 printf "Legend:\n"
 printf "DpoFua(sg_modes)*: Indicates whether the device reports support for Force Unit Access (FUA)\n"
 printf "DpoFua(/sys/block/dev/queue/fua)**: Indicates whether the kernel driver has enabled Force Unit Access (FUA) on the device\n\n"
-printf "If you notice any discrepancies, run dmesg | grep -i fua to check whether the kernel logs indicate that FUA was disabled and why. If this is an Azure VM, also verify whether read/write disk caching is enabled.\n"
+printf "If you notice any discrepancies, run dmesg | grep -i fua to check whether the kernel logs indicate that FUA was disabled and why. If this is an Azure VM, also verify whether read/write disk caching is enabled.\n\n"
+printf "Unresolved files may indicate a mismatch in case sensitivity between the actual physical file path and the path stored in sys.database.\n"

@@ -138,26 +138,6 @@ find_sqlcmd
 scenario=${1,,}
 authentication_mode=${2^^}
 
-# if [[ -n "$scenario" ]]; then
-# 	# Parameter processing from config scenario file scenario_<name>.conf in same directory
-# 	# Read config files, if defaults are overwridden there, they will be adhered to
-# 	# Config file values are  Key value pairs Example"  COLLECT_CONFIG=YES
-# 	CONFIG_FILE="./${scenario}"
-# 	echo "Reading configuration values from config scenario file $CONFIG_FILE" 
-# 	if [[ -f $CONFIG_FILE ]]; then
-# 		. $CONFIG_FILE
-# 		cp -f ./${scenario} ./pssdiag_collector.conf
-# 	else
-# 		echo "" 
-# 		echo "Error reading configuration file specified as input" 
-# 		echo "Please verify you are using one of the following scenario files" 
-# 		echo "" 
-# 		ls -1 *.scn
-# 		echo "" 
-# 		exit 1
-# 	fi
-# fi
-
 #Checks: make sure we have a valid scenario entered, we are running with system that has systemd
 if [[ ! -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]] && [[ "$scenario" != "static_collect.scn" ]] && [[ "$scenario" != "sql_perf_light.scn" ]] && [[ "$scenario" != "sql_perf_general.scn" ]] && [[ "$scenario" != "sql_perf_detailed.scn" ]]; then
 	echo -e "\x1B[31mError is specifying a scenario (first argument passed to PSSDiag)\x1B[0m"
@@ -261,8 +241,8 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 	echo    "| 4 |sql_perf_general.scn   |Collects general performance data from SQL and the OS, suitable for           |"
 	echo    "|   |                       |15 to 20-minute collection periods, covering most scenarios.                  |"
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
-	echo    "| 5 |sql_perf_detailed.scn  |Collects detailed performance data from SQL and the OS;avoid using this method|"
-	echo    "|   |                       |for extended periods as it generates a large amount of data.                  |"
+	echo    "| 5 |sql_perf_detailed.scn  |Collects detailed performance data at statement level, Avoid using this       |"
+	echo    "|   |                       |scenario as it may affect server performance                                  |"
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
 	echo ""
 	scn_user_selected=""
@@ -286,6 +266,29 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 			scenario="sql_perf_detailed.scn"
 		fi
 		echo ""
+
+		#Check if scenario is set to one of the performance-impacting options
+		if [[ "$scenario" == "sql_perf_detailed.scn" ]]; then
+	    echo -e "\033[0;31mAre you sure you want to use scenario: $scenario?\033[0m" 
+    	echo -e "\033[0;31mThis will collect performance data at the statement level, which may affect server performance.\033[0m" 
+
+			read -p "Do you want to continue? (yes/no): " choice
+
+			case "$choice" in
+				yes|y|Y)
+					echo "Proceeding with scenario: $scenario"
+					echo ""
+					;;
+				no|n|N)
+					echo "Exiting as requested."
+					exit 1
+					;;
+				*)
+					echo "Invalid input. Exiting."
+					exit 1
+					;;
+			esac
+		fi
 
 		CONFIG_FILE="./${scenario}"
 		#echo "Reading configuration values from config scenario file $CONFIG_FILE" 
@@ -344,24 +347,24 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 	echo ""
 	echo "Defines the level of data collection from SQL instance"
 	echo ""
-	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
+	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
 	echo    "|No |Run Scenario              |Description                                                                |"
-	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
+	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
 	echo    "| 1 |static_collect_kube.scn   |Passive data collection approach,focusing solely on copying standard logs  |"
 	echo    "|   |                          |from the SQL without collecting any performance data.                      |"
 	echo -e "|   |                          |\x1B[34m(Default) \x1B[0m                                                                 |"
-	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
+	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
 	echo    "| 2 |sql_perf_minimal_kube.scn |Collects minimal performance data from SQL without extended events         |"
 	echo    "|   |                          |suitable for extended use.                                                 |"
-	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
+	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
 	echo    "| 3 |sql_perf_light_kube.scn   |Collects lightweight performance data from SQL, suitable for extended use. |"
-	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
+	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
 	echo    "| 4 |sql_perf_general_kube.scn |Collects general performance data from SQL, suitable for 15 to 20-minute   |"
 	echo    "|   |                          |collection periods, covering most scenarios.                               |"
-	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
-	echo    "| 5 |sql_perf_detailed_kube.scn|Collects detailed performance data from SQL; avoid using this method for   |"
-	echo    "|   |                          |extended periods as it generates a large amount of data.                   |"
-	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
+	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
+	echo    "| 5 |sql_perf_detailed_kube.scn|Collects detailed performance data at statement level, Avoid using this    |"
+	echo    "|   |                          |scenario as it may affect server performance                               |"
+	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
 	echo ""
 	scn_user_selected=""
 	while [[ ${scn_user_selected} != [1-5] ]]
@@ -384,6 +387,30 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 			scenario="sql_perf_detailed_kube.scn"
 		fi
 		echo ""
+
+				#Check if scenario is set to one of the performance-impacting options
+		if [[ "$scenario" == "sql_perf_detailed_kube.scn" ]]; then
+	    echo -e "\033[0;31mAre you sure you want to use scenario: $scenario?\033[0m" 
+    	echo -e "\033[0;31mThis will collect performance data at the statement level, which may affect server performance.\033[0m" 
+
+			read -p "Do you want to continue? (yes/no): " choice
+
+			case "$choice" in
+				yes|y|Y)
+					echo "Proceeding with scenario: $scenario"
+					echo ""
+					;;
+				no|n|N)
+					echo "Exiting as requested."
+					exit 1
+					;;
+				*)
+					echo "Invalid input. Exiting."
+					exit 1
+					;;
+			esac
+		fi
+
 		CONFIG_FILE="./${scenario}"
 		#echo "Reading configuration values from config scenario file $CONFIG_FILE" 
 		echo "Reading configuration values from config scenario file $CONFIG_FILE" 
@@ -398,29 +425,6 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 	done 
 fi
 
-# #if authentication_mode has not been passed and we are running with system that has no systemd
-# if [[ -z "$authentication_mode" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]; then
-# 	echo -e "\x1B[2;34m======================================== Select Authentication Mode ========================================\x1B[0m" 
-# 	echo "Authentication Modes:"
-# 	echo ""
-# 	echo "Defines the Authentication Mode to use when connecting to SQL instance"
-# 	echo ""
-# 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
-# 	echo    "|No |Authentication Mode    |Description                                                                   |"
-# 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
-# 	echo -e "| 1 |SQL                    |Use SQL Athentication. \x1B[34m(Default)\x1B[0m                                              |"
-# 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
-# 	echo ""
-# 	auth_mode_selected=""
-# 	while [[ ${auth_mode_selected} != [1] ]]
-# 	do
-# 		read -r -p $'\e[1;34mSelect an Authentication Method [1] (Enter to select the default "SQL"): \e[0m' auth_mode_selected
-# 		auth_mode_selected=${auth_mode_selected:-1}
-# 		if [ $auth_mode_selected == 1 ]; then
-# 			authentication_mode="SQL"
-# 		fi
-# 	done 
-# fi
 
 # Specify all the defaults here if not specified in config file.
 ####################################################
@@ -495,6 +499,7 @@ pssdiag_log="$outputdir/pssdiag.log"
 mkdir -p $working_dir/output
 chmod a+w $working_dir/output
 cp pssdiag*.conf $working_dir/output
+
 echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 echo "$(date -u +"%T %D") PSSDiag Executed with sudo: $([ -n "$SUDO_USER" ] && echo "YES" || echo "NO")" >> $pssdiag_log
 echo "$(date -u +"%T %D") PSSDiag version: ${script_version}" >> $pssdiag_log
