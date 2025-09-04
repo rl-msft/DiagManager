@@ -69,8 +69,8 @@ sql_collect_config()
 	echo -e "$(date -u +"%T %D") Collecting SQL Configuration Snapshot at Shutdown..." | tee -a $pssdiag_log
         "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Configuration.sql" -o"$outputdir/${1}_${2}_SQL_Configuration_Shutdown.out"
 
-        echo -e "$(date -u +"%T %D") Collecting SQL traces information at Shutdown..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Existing_xel_profiler_traces.sql" -o"$outputdir/${1}_${2}_SQL_ExistingProfilerXeventTraces.out"
+        #echo -e "$(date -u +"%T %D") Collecting SQL traces information at Shutdown..." | tee -a $pssdiag_log
+        #"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Existing_xel_profiler_traces.sql" -o"$outputdir/${1}_${2}_SQL_ExistingProfilerXeventTraces.out"
 
         echo -e "$(date -u +"%T %D") Collecting SQL MiscDiag information at Shutdown..." | tee -a $pssdiag_log
         "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_MicsDiaginfo.sql" -o"$outputdir/${1}_${2}_SQL__MiscDiagInfo.out"
@@ -86,6 +86,30 @@ sql_collect_databases_disk_map()
 {
         echo -e "$(date -u +"%T %D") Collecting SQL database disk map information..." | tee -a $pssdiag_log
         ./collect_sql_database_disk_map.sh "$SQL_SERVER_NAME" "$CONN_AUTH_OPTIONS" >> $outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.out
+}
+
+sql_collect_top_plans_CPU()
+{
+        echo -e "$(date -u +"%T %D") Collecting TOP Plan by CPU..." | tee -a $pssdiag_log
+        for i in {1..10}
+        do
+
+        TOP10PLANS_QUERY=$"SET NOCOUNT ON;SELECT xmlplan FROM (
+                SELECT ROW_NUMBER() OVER(ORDER BY (highest_cpu_queries.total_worker_time/highest_cpu_queries.execution_count) DESC) AS RowNumber,
+                CAST(query_plan AS XML) xmlplan
+                FROM (
+                SELECT TOP 10 qs.plan_handle, qs.total_worker_time, qs.execution_count
+                FROM sys.dm_exec_query_stats qs
+                ORDER BY qs.total_worker_time DESC
+                ) AS highest_cpu_queries
+                CROSS APPLY sys.dm_exec_sql_text(plan_handle) AS q
+                CROSS APPLY sys.dm_exec_query_plan(plan_handle) AS p
+        ) AS x
+        WHERE RowNumber = $i"
+
+        "$SQLCMD" -S"$SQL_SERVER_NAME" $CONN_AUTH_OPTIONS -C -y 0 -Q "$TOP10PLANS_QUERY" > "$outputdir/${1}_${2}_Top_CPU_QueryPlansXml_Shutdown_${i}.sqlplan"
+
+        done
 }
  
 # end of function definitions
@@ -193,6 +217,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
                         echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 
                         sql_collect_config "${HOSTNAME}" "host_instance"
+                        sql_collect_top_plans_CPU "${HOSTNAME}" "host_instance"
                         sql_collect_linux_snapshot "${HOSTNAME}" "host_instance"
                   	sql_collect_perfstats_snapshot "${HOSTNAME}" "host_instance"
                         #chown only if pattern exists.
@@ -230,6 +255,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
                         sql_collect_alwayson "${HOSTNAME}" "instance"
                         sql_collect_querystore "${HOSTNAME}" "instance"
                         sql_collect_config "${HOSTNAME}" "instance"
+                        sql_collect_top_plans_CPU "${HOSTNAME}" "instance"
                         sql_collect_linux_snapshot "${HOSTNAME}" "instance"
                         sql_collect_perfstats_snapshot "${HOSTNAME}" "instance"
                 fi
@@ -265,6 +291,7 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                 sql_collect_alwayson "${dockername}" "container_instance"
                                 sql_collect_querystore "${dockername}" "container_instance"
                                 sql_collect_config "${dockername}" "container_instance"
+                                sql_collect_top_plans_CPU "${dockername}" "container_instance"
                                 sql_collect_linux_snapshot "${dockername}" "container_instance"
                                 sql_collect_perfstats_snapshot "${dockername}" "container_instance"
                         fi
@@ -296,6 +323,7 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                         sql_collect_alwayson "${dockername}" "container_instance"
                                         sql_collect_querystore "${dockername}" "container_instance"
                                         sql_collect_config "${dockername}" "container_instance"
+                                        sql_collect_top_plans_CPU "${dockername}" "container_instance"
                                         sql_collect_linux_snapshot "${dockername}" "container_instance"
                                         sql_collect_perfstats_snapshot "${dockername}" "container_instance"
                                 fi
