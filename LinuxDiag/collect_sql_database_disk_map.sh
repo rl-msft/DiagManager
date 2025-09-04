@@ -31,18 +31,24 @@ while IFS='|' read -r db_name physical_name; do
         db_name=$(echo "$db_name" | sed 's/^ *//;s/ *$//')
         physical_name=$(echo "$physical_name" | sed 's/^ *//;s/ *$//')
 
+        #in case sys.database has a different case sensitivity than the actual file path, try to resolve it by converting to lower case
         lower_path=$(echo "$physical_name" | tr '[:upper:]' '[:lower:]')
+
+        #try capitalizing the file extension only, in case the file system is case sensitive and the file extension is capitalized
+        captilized_ext="${lower_path%.*}.$(echo "${lower_path##*.}" | tr '[:lower:]' '[:upper:]')"
 
         if [[ -e "$physical_name" ]]; then
                 actual_path="$physical_name"
         elif [[ -e "$lower_path" ]]; then
                 actual_path="$lower_path"
+        elif [[ -e "$captilized_ext" ]]; then
+                actual_path="$captilized_ext"
         else
                 actual_path="$physical_name (unresolve)"
         fi
 
-        resolved=$(readlink -f -- "$actual_path" 2>/dev/null || echo "$actual_path")
-        actual_path="$resolved"
+        #resolved=$(readlink -f -- "$actual_path" 2>/dev/null || echo "$actual_path")
+        #actual_path="$resolved"
 
         df_output=$(df -T -- "$actual_path" 2>/dev/null | awk 'NR==2')
         FileSystem_type=$(echo "$df_output" | awk '{print $2}')
