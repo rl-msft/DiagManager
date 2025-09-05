@@ -13,7 +13,6 @@ find_sqlcmd()
 	fi
 }
 
-
 SQL_SERVER_NAME=${1}
 CONN_AUTH_OPTIONS=${2}
 
@@ -31,25 +30,52 @@ while IFS='|' read -r db_name physical_name; do
         db_name=$(echo "$db_name" | sed 's/^ *//;s/ *$//')
         physical_name=$(echo "$physical_name" | sed 's/^ *//;s/ *$//')
 
-        #in case sys.database has a different case sensitivity than the actual file path, try to resolve it by converting to lower case
-        lower_path=$(echo "$physical_name" | tr '[:upper:]' '[:lower:]')
+        resolved="Exact"
 
-        #try capitalizing the file extension only, in case the file system is case sensitive and the file extension is capitalized
-        captilized_ext="${lower_path%.*}.$(echo "${lower_path##*.}" | tr '[:lower:]' '[:upper:]')"
+        # in the case there is mistmatch in case sensitivity between sys.database and actual file path, this block tries to resolve it
+        if [[ ! -e "$physical_name" || "$physical_name" == "NULL" ]]; then
+           
+            # try1 to get directory content, and compared lowered file names. If match found, set filelocated
+            # try2 to get directory content lowered, and compared lowered file names. If match found, set filelocated
+            dir_path=$(dirname "$physical_name")
+            file_name=$(basename "$physical_name")
 
-        if [[ -e "$physical_name" ]]; then
-                actual_path="$physical_name"
-        elif [[ -e "$lower_path" ]]; then
-                actual_path="$lower_path"
-        elif [[ -e "$captilized_ext" ]]; then
-                actual_path="$captilized_ext"
+            # Convert filename to lowercase
+            dir_path_lower=$(echo "$dir_path" | tr '[:upper:]' '[:lower:]')
+            file_name_lower=$(echo "$file_name" | tr '[:upper:]' '[:lower:]')
+
+            # Initialize variable
+            actual_path=""
+
+            # Determine which directory to use
+            if [ -d "$dir_path" ]; then
+                search_dir="$dir_path"
+            elif [ -d "$dir_path_lower" ]; then
+                search_dir="$dir_path_lower"
+            else
+                actual_path=""
+                resolved="Unresolved"
+            fi
+
+            # Loop through entries in the chosen directory
+            while IFS= read -r entry; do
+                entry_lower=$(echo "$entry" | tr '[:upper:]' '[:lower:]')
+                if [ "$entry_lower" == "$file_name_lower" ]; then
+                    if [[ -e "$dir_path/$entry" ]]; then
+                        actual_path="$dir_path/$entry"
+                        resolved="Resolved"
+                    fi
+                    if [[ -e "$dir_path_lower/$entry" ]]; then
+                        actual_path="$dir_path_lower/$entry"
+                        resolved="Resolved"
+                    fi
+                    break
+                fi
+            done < <(ls "$search_dir" 2>/dev/null)
         else
-                actual_path="$physical_name (unresolve)"
+            actual_path="$physical_name"
         fi
-
-        #resolved=$(readlink -f -- "$actual_path" 2>/dev/null || echo "$actual_path")
-        #actual_path="$resolved"
-
+        
         df_output=$(df -T -- "$actual_path" 2>/dev/null | awk 'NR==2')
         FileSystem_type=$(echo "$df_output" | awk '{print $2}')
         mount_point=$(echo "$df_output" | awk '{print $7}')
@@ -81,13 +107,13 @@ while IFS='|' read -r db_name physical_name; do
 
         DpoFua_sys_block=$(cat /sys/block/$disk/queue/fua)
 
-        data+=("$db_name|$actual_path|$FileSystem_type|$DpoFua_sg_modes|$DpoFua_sys_block|$diskpartition|$disk|$mount_point|$using_lvm")
+        data+=("$db_name|$physical_name|$actual_path|$resolved|$FileSystem_type|$DpoFua_sg_modes|$DpoFua_sys_block|$diskpartition|$disk|$mount_point|$using_lvm")
 
 done < <("$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -h -1 -W -s '|' -Q "$QUERY" | grep -v '^$')
 
 
 # Define column headers dynamically
-columns=("Database" "Physical_Name" "Filesystem" "DpoFua(sg_modes)*" "DpoFua(/sys/block/dev/queue/fua)**" "Disk_Partition" "Disk" "Mount" "using_lvm")
+columns=("Database" "Path in sys.master_files" "Actual_Path" "Resolved Path" "Filesystem" "DpoFua(sg_modes)*" "DpoFua(/sys/block/dev/queue/fua)**" "Disk_Partition" "Disk" "Mount" "using_lvm")
 
 # Initialize max lengths array with header lengths
 declare -a max_lengths
@@ -131,4 +157,4 @@ printf "Legend:\n"
 printf "DpoFua(sg_modes)*: Indicates whether the device reports support for Force Unit Access (FUA)\n"
 printf "DpoFua(/sys/block/dev/queue/fua)**: Indicates whether the kernel driver has enabled Force Unit Access (FUA) on the device\n\n"
 printf "If you notice any discrepancies, run dmesg | grep -i fua to check whether the kernel logs indicate that FUA was disabled and why. If this is an Azure VM, also verify whether read/write disk caching is enabled.\n\n"
-printf "Unresolved files may indicate a mismatch in case sensitivity between the actual physical file path and the path stored in sys.database.\n"
+printf "Unresolved path indicates a mismatch in case sensitivity between the actual physical file path and the path stored in sys.master_files, or the file does not exist\n"
