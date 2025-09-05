@@ -126,7 +126,7 @@ done < <("$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -h -1 -W -s '|' -Q "
 
 
 # Define column headers dynamically
-columns=("Database" "Physical_Path(sys.master_files)" "Actual_Path" "Resolved Path" "Filesystem" "DpoFua(sg_modes)*" "DpoFua(/sys/block/dev/queue/fua)**" "Disk_Partition" "Disk" "Mount" "using_lvm")
+columns=("Database" "Physical_name(sys.master_files)" "Actual_Path" "Resolved Path" "Filesystem" "DpoFua(sg_modes)*" "DpoFua(/sys/block/dev/queue/fua)**" "Disk_Partition" "Disk" "Mount" "using_lvm")
 
 # Initialize max lengths array with header lengths
 declare -a max_lengths
@@ -169,5 +169,5 @@ printf "\n"
 printf "Legend:\n"
 printf "DpoFua(sg_modes)*: Indicates whether the device reports support for Force Unit Access (FUA)\n"
 printf "DpoFua(/sys/block/dev/queue/fua)**: Indicates whether the kernel driver has enabled Force Unit Access (FUA) on the device\n\n"
-printf "If you notice any discrepancies, run dmesg | grep -i fua to check whether the kernel logs indicate that FUA was disabled and why. If this is an Azure VM, also verify whether read/write disk caching is enabled.\n\n"
-printf "Unresolved path indicates a mismatch in case sensitivity between the actual physical file path and the path stored in sys.master_files, or the file does not exist\n"
+printf "If you notice any discrepancies in FUA reporting between DpoFua(sg_modes) and DpoFua(/sys/block/dev/queue/fua), run \"dmesg | grep -i fua\" to check if FUA was disabled by kernel driver and why. If this is an Azure VM, verify whether read/write disk caching is enabled.\n\n"
+printf "Unresolved path indicates that the file does not exist or there is a case sensitivity mismatch between the actual physical file path and the Physical_name column value in sys.master_files, or \n"
