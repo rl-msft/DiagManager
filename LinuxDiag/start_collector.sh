@@ -459,9 +459,9 @@ fi
 	echo -e "\x1B[2;34m========================================== Checking Prerequisites ==========================================\x1B[0m" 
 
 
-#Check if we run with SUDO
-[ -z "$SUDO_USER" ] && {
-  echo -e "\e[31mWarning: PSSDiag was executed without elevated (sudo) privileges. OS-level and SQL Server log collectors will be unable to execute. Only T-SQL based data collection will be able to execute.\e[0m"
+# Check if we run with SUDO and not inside a container
+[ -z "$SUDO_USER" ] && [ "$is_instance_inside_container_active" = "NO" ] && {
+  echo -e "\e[31mWarning: PSSDiag was executed without elevated (sudo) privileges and outside a container. OS-level and SQL Server log collectors will be unable to execute. Only T-SQL based data collection will be able to execute.\e[0m"
   read -p "Do you want to continue anyway? (y/n): " choice
   case "$choice" in
     y|Y ) ;;
