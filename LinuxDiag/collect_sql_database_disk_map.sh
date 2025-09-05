@@ -27,10 +27,20 @@ find_sqlcmd
 # Collect data into an array
 data=()
 while IFS='|' read -r db_name physical_name; do
+
+
+        # Initialize variables
         db_name=$(echo "$db_name" | sed 's/^ *//;s/ *$//')
         physical_name=$(echo "$physical_name" | sed 's/^ *//;s/ *$//')
-
-        resolved="Exact"
+        actual_path=""
+        resolved=""
+        FileSystem_type=""
+        DpoFua_sg_modes=""
+        DpoFua_sys_block=""
+        diskpartition=""
+        disk=""
+        mount_point=""
+        using_lvm=""
 
         # in the case there is mistmatch in case sensitivity between sys.database and actual file path, this block tries to resolve it
         if [[ ! -e "$physical_name" || "$physical_name" == "NULL" ]]; then
@@ -74,38 +84,41 @@ while IFS='|' read -r db_name physical_name; do
             done < <(ls "$search_dir" 2>/dev/null)
         else
             actual_path="$physical_name"
-        fi
-        
-        df_output=$(df -T -- "$actual_path" 2>/dev/null | awk 'NR==2')
-        FileSystem_type=$(echo "$df_output" | awk '{print $2}')
-        mount_point=$(echo "$df_output" | awk '{print $7}')
-        #if using LVM then the mout_source will be mapper /dev/mapper/ubuntu--vg-ubuntu--lv, otherwise it will partition like /dev/sda3
-        mount_source=$(findmnt -no SOURCE "$mount_point")
-        Block_type=$(lsblk -no TYPE "$mount_source")
-
-        # Check if we are using LVM, LVM means we are using disk mapper - avoid using lvs
-        if [[ $Block_type == "lvm" ]]; then
-            using_lvm=1
-        else
-            using_lvm=0
+            resolved="Exact"
         fi
 
-        # Get the diskpartition depending on if we are using LVM
-        if [[ $using_lvm -eq 1 ]]; then
-            #if we are using LVM then use lvdisplay to get the diskpartition
-            diskpartition=$(lvdisplay -m "$mount_source" 2>/dev/null | awk '/Physical volume/ {print $3}')
-            [[ -z "$diskpartition" ]] && diskpartition="-"
-        else
-            #if we are not using LVM, then its diskpartition already
-            diskpartition=$mount_source
+        if [[ -e "$actual_path" ]]; then
+            df_output=$(df -T -- "$actual_path" 2>/dev/null | awk 'NR==2')
+            FileSystem_type=$(echo "$df_output" | awk '{print $2}')
+            mount_point=$(echo "$df_output" | awk '{print $7}')
+            #if using LVM then the mout_source will be mapper /dev/mapper/ubuntu--vg-ubuntu--lv, otherwise it will partition like /dev/sda3
+            mount_source=$(findmnt -no SOURCE "$mount_point")
+            Block_type=$(lsblk -no TYPE "$mount_source")
+
+            # Check if we are using LVM, LVM means we are using disk mapper - avoid using lvs
+            if [[ $Block_type == "lvm" ]]; then
+                using_lvm=1
+            else
+                using_lvm=0
+            fi
+
+            # Get the diskpartition depending on if we are using LVM
+            if [[ $using_lvm -eq 1 ]]; then
+                #if we are using LVM then use lvdisplay to get the diskpartition
+                diskpartition=$(lvdisplay -m "$mount_source" 2>/dev/null | awk '/Physical volume/ {print $3}')
+                [[ -z "$diskpartition" ]] && diskpartition="-"
+            else
+                #if we are not using LVM, then its diskpartition already
+                diskpartition=$mount_source
+            fi
+
+            disk=$(echo "$diskpartition" | sed -E 's|^/dev/||; s|(nvme[0-9]+n[0-9]+)p[0-9]+|\1|; s|([a-zA-Z]+)[0-9]+|\1|')
+
+            DpoFua_sg_modes=$(sg_modes "$diskpartition" 2>/dev/null | grep -oE 'DpoFua=[01]' | sed 's/.*=//')
+            [[ -z "${DpoFua_sg_modes:-}" ]] && DpoFua_sg_modes="-"
+
+            DpoFua_sys_block=$(cat /sys/block/$disk/queue/fua)
         fi
-
-        disk=$(echo "$diskpartition" | sed -E 's|^/dev/||; s|(nvme[0-9]+n[0-9]+)p[0-9]+|\1|; s|([a-zA-Z]+)[0-9]+|\1|')
-
-        DpoFua_sg_modes=$(sg_modes "$diskpartition" 2>/dev/null | grep -oE 'DpoFua=[01]' | sed 's/.*=//')
-        [[ -z "${DpoFua_sg_modes:-}" ]] && DpoFua_sg_modes="-"
-
-        DpoFua_sys_block=$(cat /sys/block/$disk/queue/fua)
 
         data+=("$db_name|$physical_name|$actual_path|$resolved|$FileSystem_type|$DpoFua_sg_modes|$DpoFua_sys_block|$diskpartition|$disk|$mount_point|$using_lvm")
 
@@ -113,7 +126,7 @@ done < <("$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -h -1 -W -s '|' -Q "
 
 
 # Define column headers dynamically
-columns=("Database" "Path in sys.master_files" "Actual_Path" "Resolved Path" "Filesystem" "DpoFua(sg_modes)*" "DpoFua(/sys/block/dev/queue/fua)**" "Disk_Partition" "Disk" "Mount" "using_lvm")
+columns=("Database" "Physical_Path(sys.master_files)" "Actual_Path" "Resolved Path" "Filesystem" "DpoFua(sg_modes)*" "DpoFua(/sys/block/dev/queue/fua)**" "Disk_Partition" "Disk" "Mount" "using_lvm")
 
 # Initialize max lengths array with header lengths
 declare -a max_lengths
