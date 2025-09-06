@@ -138,6 +138,55 @@ find_sqlcmd
 scenario=${1,,}
 authentication_mode=${2^^}
 
+# setup the output directory to collect data and logs
+working_dir="$PWD"
+outputdir="$working_dir/output"
+
+#Check if output directory exists, if yes prompt to overwrite
+if [[ -d "$outputdir" ]]; then
+  echo -e "\e[31mOutput directory {$outputdir}  exists..\e[0m"
+  read -p "Do you want to overwrite? (y/n): " choice
+  case "$choice" in
+    y|Y ) ;;
+    n|N ) exit 1;;
+    * ) exit 1;;
+  esac
+fi
+
+# Make sure I can overwrite the output directory
+if [ "$(id -u)" -ne 0 ]; then
+    if [ -e "$outputdir" ]; then
+        owner=$(stat -c '%U' "$outputdir")  # Use -f '%Su' on macOS
+        if [ "$owner" = "root" ]; then
+            echo "The folder \"$outputdir\" is owned by root."
+			echo "This folder cannot be deleted because the script is not running with elevated privileges (sudo). Please remove it manually using sudo, then re-run the script."
+            exit 1
+        fi
+    fi
+fi
+
+
+# Make sure output directory in working directory exists
+mkdir -p $working_dir/output
+chmod a+w $working_dir/output
+
+
+#setuping the log file, and set the directive to send error to the log file.
+pssdiag_log="$outputdir/pssdiag.log"
+exec 2> >(tee -a $pssdiag_log >&2)
+
+# Check if we run with SUDO and not inside a container
+if [ -z "$SUDO_USER" ] && [ "$is_instance_inside_container_active" = "NO" ]; then
+  echo -e "\e[31mWarning: PSSDiag was executed without elevated (sudo) privileges and outside a container. OS-level and SQL Server log collectors will be unable to execute. Only T-SQL based data collection will be able to execute.\e[0m"
+  read -p "Do you want to continue anyway? (y/n): " choice
+  case "$choice" in
+    y|Y ) ;;
+    n|N ) exit 1;;
+    * ) exit 1;;
+  esac
+fi
+
+
 #Checks: make sure we have a valid scenario entered, we are running with system that has systemd
 if [[ ! -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]] && [[ "$scenario" != "static_collect.scn" ]] && [[ "$scenario" != "sql_perf_light.scn" ]] && [[ "$scenario" != "sql_perf_general.scn" ]] && [[ "$scenario" != "sql_perf_detailed.scn" ]]; then
 	echo -e "\x1B[31mError is specifying a scenario (first argument passed to PSSDiag)\x1B[0m"
@@ -459,16 +508,6 @@ fi
 	echo -e "\x1B[2;34m========================================== Checking Prerequisites ==========================================\x1B[0m" 
 
 
-# Check if we run with SUDO and not inside a container
-[ -z "$SUDO_USER" ] && [ "$is_instance_inside_container_active" = "NO" ] && {
-  echo -e "\e[31mWarning: PSSDiag was executed without elevated (sudo) privileges and outside a container. OS-level and SQL Server log collectors will be unable to execute. Only T-SQL based data collection will be able to execute.\e[0m"
-  read -p "Do you want to continue anyway? (y/n): " choice
-  case "$choice" in
-    y|Y ) ;;
-    n|N ) exit 1;;
-    * ) exit 1;;
-  esac
-}
 
 
 # check if we have all pre-requisite to perform data collection
@@ -478,26 +517,7 @@ echo "Prerequisites for collecting all data are not met... exiting"
 exit 1
 fi
 
-if [[ -d "$outputdir" ]]; then
-	read -n1 -r -p "Output directory {$outputdir}  exists.. Do you want to overwrite (Y/N) ?" diroverwrite
-	echo "" 
-	if [[ $diroverwrite = [Yy] ]] ;
-	then
-		rm -rf $outputdir
-	else
-		echo "Please delete the output directory and rerun the collector.." 
-		exit 1
-	fi
-fi
-
-# setup the output directory to collect data and logs
-working_dir="$PWD"
-outputdir="$working_dir/output"
-pssdiag_log="$outputdir/pssdiag.log"
-
-# Make sure output directory in working directory exists
-mkdir -p $working_dir/output
-chmod a+w $working_dir/output
+#get copy of current config
 cp pssdiag*.conf $working_dir/output
 
 echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log

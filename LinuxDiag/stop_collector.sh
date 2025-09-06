@@ -381,7 +381,7 @@ echo -e "\x1B[2;34m=======================================  Creating Compressed 
 #zip up output directory
 short_hostname="${HOSTNAME%%.*}"
 tar -cjf "output_${short_hostname}_${NOW}.tar.bz2" output
-echo -e "***Data collected is in the file output_${short_hostname}_${NOW}.tar.bz2 ***" | tee -a $pssdiag_log
+echo -e "*** Data collected is in the file output_${short_hostname}_${NOW}.tar.bz2 ***" | tee -a $pssdiag_log
 echo -e "\x1B[2;34m=================================================== Done ===================================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 
 
