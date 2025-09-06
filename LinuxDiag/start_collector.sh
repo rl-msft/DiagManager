@@ -298,7 +298,9 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 	scn_user_selected=""
 	while [[ ${scn_user_selected} != [1-5] ]]
 	do
-		read -r -p $'\e[1;34mSelect a Scenario [1-5] (Enter to select the default "static_collect.scn"): \e[0m' scn_user_selected
+		read -r -p $'\e[1;34mSelect a Scenario [1-5] (Enter to select the default "static_collect.scn"): \e[0m' scn_user_selected < /dev/tty 2> /dev/tty
+
+		scn_user_selected=${scn_user_selected:-1}
 
 		#check if we have a valid selection
 		if [[ ! "$scn_user_selected" =~ ^[1-5]$ ]]; then
@@ -306,7 +308,7 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
     		exit 1
 		fi
 
-		scn_user_selected=${scn_user_selected:-1}
+		
 		if [[ ${scn_user_selected} == 1 ]]; then
 			scenario="static_collect.scn"
 		fi
@@ -383,7 +385,7 @@ if [[ -z "$authentication_mode" ]] && [[ "$is_instance_inside_container_active" 
 	auth_mode_selected=""
 	while [[ ${auth_mode_selected} != [1-3] ]]
 	do
-		read -r -p $'\e[1;34mSelect an Authentication Method [1-3] (Enter to select the default "SQL"): \e[0m' auth_mode_selected
+		read -r -p $'\e[1;34mSelect an Authentication Method [1-3] (Enter to select the default "SQL"): \e[0m' auth_mode_selected < /dev/tty 2> /dev/tty
 		auth_mode_selected=${auth_mode_selected:-1}
 		if [ $auth_mode_selected == 1 ]; then
 			authentication_mode="SQL"
@@ -426,7 +428,9 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 	scn_user_selected=""
 	while [[ ${scn_user_selected} != [1-5] ]]
 	do
-		read -r -p $'\e[1;34mSelect a Scenario [1-5] (Enter to select the default "static_collect_kube.scn"): \e[0m' scn_user_selected
+		read -r -p $'\e[1;34mSelect a Scenario [1-5] (Enter to select the default "static_collect_kube.scn"): \e[0m' scn_user_selected < /dev/tty 2> /dev/tty
+
+		scn_user_selected=${scn_user_selected:-1}
 
 		#check if we have a valid selection
 		if [[ ! "$scn_user_selected" =~ ^[1-5]$ ]]; then
@@ -434,7 +438,6 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
     		exit 1
 		fi
 
-		scn_user_selected=${scn_user_selected:-1}
 		if [[ ${scn_user_selected} == 1 ]]; then
 			scenario="static_collect_kube.scn"
 		fi

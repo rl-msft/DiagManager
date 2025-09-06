@@ -241,7 +241,7 @@ sql_connect()
 
 	#if the user selected NONE Mode, ask then about what they need to use to this instance we are trying to connect to
 	while [[ "${auth_mode}" != "SQL" ]] && [[ "${auth_mode}" != "AD" ]]; do
-		read -r -p $'\e[1;34mSelect Authentication Mode: 1 SQL Authentication (Default), 2 AD Authentication: \e[0m' lmode 
+		read -r -p $'\e[1;34mSelect Authentication Mode: 1 SQL Authentication (Default), 2 AD Authentication: \e[0m' lmode < /dev/tty 2> /dev/tty
 		lmode=${lmode:-1}
 		if [ 1 = $lmode ]; then
 			auth_mode="SQL"

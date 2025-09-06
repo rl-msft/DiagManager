@@ -144,15 +144,8 @@ fi
 
 # now ask the user what they want to do if any program is absent
 if (( ("$check_sqlcmd" == "0") || ( "$check_iotop" == "0" ) || ( "$check_sysstat" == "0" ) || ( "$check_bzip2" == "0" ) )); then
-	echo -e "If you do not have all the required programs installed data collection will not be reliable and complete! \x1B[0m" | tee -a $pssdiag_log
-	read -p "Do you want to continue with data collection? Type Y or N : " check_input | tee -a $pssdiag_log
-	if [[ $check_input = [Yy] ]] 
-	then
-		exit 0
-	else
-		# we cannot continue execution, the main script will abort execution
-                exit 1
-	fi
+	echo -e "PSSDiag cannot proceed because one or more required prerequisite programs are missing. Please install all required components before launching PSSDiag again.! \x1B[0m" | tee -a $pssdiag_log
+	exit 1
 else
 	# we are good with all re-req checks, we can continue with data collection
 	echo -e "Completed pre-req checks..."  | tee -a $pssdiag_log
