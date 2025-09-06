@@ -241,7 +241,7 @@ sql_connect()
 
 	#if the user selected NONE Mode, ask then about what they need to use to this instance we are trying to connect to
 	while [[ "${auth_mode}" != "SQL" ]] && [[ "${auth_mode}" != "AD" ]]; do
-		read -r -p $'\e[1;34mSelect Authentication Mode: 1 SQL Authentication (Default), 2 AD Authentication: \e[0m' lmode
+		read -r -p $'\e[1;34mSelect Authentication Mode: 1 SQL Authentication (Default), 2 AD Authentication: \e[0m' lmode 
 		lmode=${lmode:-1}
 		if [ 1 = $lmode ]; then
 			auth_mode="SQL"
@@ -281,8 +281,8 @@ sql_connect()
 				SQL_SERVER_NAME="${HOSTNAME},${3}"
 			fi
 			#prompt for credentials for SQL authentication
-			read -r -p $'\e[1;34mEnter SQL UserName: \e[0m' XsrX
-			read -s -r -p $'\e[1;34mEnter User Password: \e[0m' XssX
+			read -r -p $'\e[1;34mEnter SQL UserName: \e[0m' XsrX < /dev/tty 2> /dev/tty
+			read -s -r -p $'\e[1;34mEnter User Password: \e[0m' XssX < /dev/tty 2> /dev/tty
 			"$SQLCMD" -S$SQL_SERVER_NAME -U$XsrX -P$XssX -C -Q"select @@version" 2>&1 >/dev/null
 			if [[ $? -eq 0 ]]; then
 				sqlconnect=1

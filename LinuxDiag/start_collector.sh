@@ -144,8 +144,8 @@ outputdir="$working_dir/output"
 
 #Check if output directory exists, if yes prompt to overwrite
 if [[ -d "$outputdir" ]]; then
-  echo -e "\e[31mOutput directory {$outputdir}  exists..\e[0m"
-  read -p "Do you want to overwrite? (y/n): " choice
+  echo -e "\e[31mOutput directory {$outputdir} exists..\e[0m"
+  read -p "Do you want to overwrite? (y/n): " choice 
   case "$choice" in
     y|Y ) ;;
     n|N ) exit 1;;
@@ -159,33 +159,34 @@ if [ "$(id -u)" -ne 0 ]; then
         owner=$(stat -c '%U' "$outputdir")  # Use -f '%Su' on macOS
         if [ "$owner" = "root" ]; then
             echo "The folder \"$outputdir\" is owned by root."
-			echo "This folder cannot be deleted because the script is not running with elevated privileges (sudo). Please remove it manually using sudo, then re-run the script."
+			echo "This folder cannot be deleted because PSSDiag was started without elevated (sudo) permissions. Please remove it manually using sudo, then re-run the script."
             exit 1
         fi
     fi
 fi
 
-
-# Make sure output directory in working directory exists
+# --remove the output directory
+if [ -d "$outputdir" ]; then
+  rm -rf "$outputdir"
+fi
 mkdir -p $working_dir/output
 chmod a+w $working_dir/output
 
 
 #setuping the log file, and set the directive to send error to the log file.
 pssdiag_log="$outputdir/pssdiag.log"
-exec 2> >(tee -a $pssdiag_log >&2)
+exec 2> >(tee -a $pssdiag_log >&2) 
 
 # Check if we run with SUDO and not inside a container
 if [ -z "$SUDO_USER" ] && [ "$is_instance_inside_container_active" = "NO" ]; then
-  echo -e "\e[31mWarning: PSSDiag was executed without elevated (sudo) privileges and outside a container. OS-level and SQL Server log collectors will be unable to execute. Only T-SQL based data collection will be able to execute.\e[0m"
-  read -p "Do you want to continue anyway? (y/n): " choice
+  echo -e "\e[31mWarning: PSSDiag was started without elevated (sudo) permissions. While it will attempt to collect operating system and SQL Server logs, some log collections may fail due to insufficient privileges. T-SQL based data collection will be able to execute.\e[0m" | tee -a $pssdiag_log
+  read -p "Do you want to continue anyway? (y/n): " choice < /dev/tty 2> /dev/tty
   case "$choice" in
     y|Y ) ;;
     n|N ) exit 1;;
     * ) exit 1;;
   esac
 fi
-
 
 #Checks: make sure we have a valid scenario entered, we are running with system that has systemd
 if [[ ! -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]] && [[ "$scenario" != "static_collect.scn" ]] && [[ "$scenario" != "sql_perf_light.scn" ]] && [[ "$scenario" != "sql_perf_general.scn" ]] && [[ "$scenario" != "sql_perf_detailed.scn" ]]; then
@@ -298,6 +299,13 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 	while [[ ${scn_user_selected} != [1-5] ]]
 	do
 		read -r -p $'\e[1;34mSelect a Scenario [1-5] (Enter to select the default "static_collect.scn"): \e[0m' scn_user_selected
+
+		#check if we have a valid selection
+		if [[ ! "$scn_user_selected" =~ ^[1-5]$ ]]; then
+    		echo "Invalid selection. Exiting..."
+    		exit 1
+		fi
+
 		scn_user_selected=${scn_user_selected:-1}
 		if [[ ${scn_user_selected} == 1 ]]; then
 			scenario="static_collect.scn"
@@ -318,8 +326,8 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 
 		#Check if scenario is set to one of the performance-impacting options
 		if [[ "$scenario" == "sql_perf_detailed.scn" ]]; then
-	    echo -e "\033[0;31mAre you sure you want to use scenario: $scenario?\033[0m" 
-    	echo -e "\033[0;31mThis will collect performance data at the statement level, which may affect server performance.\033[0m" 
+	    echo -e "\033[0;31mAre you sure you want to use scenario: $scenario?\033[0m" | tee -a $pssdiag_log
+    	echo -e "\033[0;31mThis will collect performance data at the statement level, which may affect server performance.\033[0m" | tee -a $pssdiag_log
 
 			read -p "Do you want to continue? (yes/no): " choice
 
@@ -419,6 +427,13 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 	while [[ ${scn_user_selected} != [1-5] ]]
 	do
 		read -r -p $'\e[1;34mSelect a Scenario [1-5] (Enter to select the default "static_collect_kube.scn"): \e[0m' scn_user_selected
+
+		#check if we have a valid selection
+		if [[ ! "$scn_user_selected" =~ ^[1-5]$ ]]; then
+    		echo "Invalid selection. Exiting..."
+    		exit 1
+		fi
+
 		scn_user_selected=${scn_user_selected:-1}
 		if [[ ${scn_user_selected} == 1 ]]; then
 			scenario="static_collect_kube.scn"
@@ -439,8 +454,8 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 
 				#Check if scenario is set to one of the performance-impacting options
 		if [[ "$scenario" == "sql_perf_detailed_kube.scn" ]]; then
-	    echo -e "\033[0;31mAre you sure you want to use scenario: $scenario?\033[0m" 
-    	echo -e "\033[0;31mThis will collect performance data at the statement level, which may affect server performance.\033[0m" 
+	    echo -e "\033[0;31mAre you sure you want to use scenario: $scenario?\033[0m" | tee -a $pssdiag_log
+    	echo -e "\033[0;31mThis will collect performance data at the statement level, which may affect server performance.\033[0m" | tee -a $pssdiag_log
 
 			read -p "Do you want to continue? (yes/no): " choice
 
@@ -505,16 +520,16 @@ else
         COLLECT_SQL="YES"
 fi
 
-	echo -e "\x1B[2;34m========================================== Checking Prerequisites ==========================================\x1B[0m" 
-
-
+echo -e "\x1B[2;34m========================================== Checking Prerequisites ==========================================\x1B[0m" | tee -a $pssdiag_log
 
 
 # check if we have all pre-requisite to perform data collection
 ./check_pre_req.sh $COLLECT_SQL $COLLECT_OS_COUNTERS $scenario $authentication_mode
 if [[ $? -ne 0 ]] ; then
-echo "Prerequisites for collecting all data are not met... exiting" 
-exit 1
+	echo "Prerequisites for collecting all data are not met... exiting" | tee -a $pssdiag_log
+	exit 1
+else
+	echo "All prerequisites for collecting data are met... proceeding" | tee -a $pssdiag_log
 fi
 
 #get copy of current config
