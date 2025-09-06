@@ -179,13 +179,17 @@ exec 2> >(tee -a $pssdiag_log >&2)
 
 # Check if we run with SUDO and not inside a container
 if [ -z "$SUDO_USER" ] && [ "$is_instance_inside_container_active" = "NO" ]; then
-  echo -e "\e[31mWarning: PSSDiag was started without elevated (sudo) permissions. While it will attempt to collect operating system and SQL Server logs, some log collections may fail due to insufficient privileges. T-SQL based data collection will be able to execute.\e[0m" | tee -a $pssdiag_log
-  read -p "Do you want to continue anyway? (y/n): " choice < /dev/tty 2> /dev/tty
-  case "$choice" in
-    y|Y ) ;;
-    n|N ) exit 1;;
-    * ) exit 1;;
-  esac
+	echo -e "\e[31mWarning: PSSDiag was started without elevated (sudo) permissions.\e[0m" | tee -a "$pssdiag_log"
+	echo -e "\e[31mElevated (sudo) permissions are required for PSSDiag to collect complete diagnostic data.\e[0m" | tee -a "$pssdiag_log"
+	echo -e "\e[31mWithout elevated permissions, most OS and SQL Server log collectors will fail.\e[0m" | tee -a "$pssdiag_log"
+	echo -e "\e[31mT-SQL collectors will fail for instances running on non-default ports.\e[0m" | tee -a "$pssdiag_log"
+	echo -e "\e[31mT-SQL collectors will also fail for SQL Server containers.\e[0m" | tee -a "$pssdiag_log"
+	read -p "Do you want to continue anyway? (y/n): " choice < /dev/tty 2> /dev/tty
+	case "$choice" in
+		y|Y ) ;;
+		n|N ) exit 1;;
+		* ) exit 1;;
+	esac
 fi
 
 #Checks: make sure we have a valid scenario entered, we are running with system that has systemd
