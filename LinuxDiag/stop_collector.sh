@@ -395,17 +395,17 @@ fi
 
 if [ "$EUID" -ne 0 ]; then
 # for minimal collecton, where user didnt use sudo, we cant compress the output file as it may contains files with mssql user, like XEL and TRC files.
-  echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-  echo "Data collected in the output folder, Compress the output folder with sudo to include all the files." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-  echo -e "\x1B[2;34m=================================================== Done ===================================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+  echo -e "\x1B[2;34m============================================================================================================\x1B[0m" 
+  echo "Data collected in the output folder, Compress the output folder with sudo to include all the files." 
+  echo -e "\x1B[2;34m=================================================== Done ===================================================\x1B[0m" 
   exit 0
 fi
 
-echo -e "\x1B[2;34m=======================================  Creating Compressed Archive =======================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+echo -e "\x1B[2;34m=======================================  Creating Compressed Archive =======================================\x1B[0m" 
 #zip up output directory
 short_hostname="${HOSTNAME%%.*}"
 tar -cjf "output_${short_hostname}_${NOW}.tar.bz2" output
-echo -e "*** Data collected is in the file output_${short_hostname}_${NOW}.tar.bz2 ***" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-echo -e "\x1B[2;34m=================================================== Done ===================================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+echo -e "*** Data collected is in the file output_${short_hostname}_${NOW}.tar.bz2 ***"
+echo -e "\x1B[2;34m=================================================== Done ===================================================\x1B[0m"
 
 
