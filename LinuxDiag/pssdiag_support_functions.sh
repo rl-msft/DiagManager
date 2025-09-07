@@ -287,7 +287,7 @@ sql_connect()
 			if [[ $? -eq 0 ]]; then
 				sqlconnect=1
 				echo ""
-				echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | tee -a $pssdiag_log
+				echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 				sql_ver=$("$SQLCMD" -S$SQL_SERVER_NAME -U$XsrX -P$XssX -C -Q"PRINT CONVERT(NVARCHAR(128), SERVERPROPERTY('ProductVersion'))")
 				echo "$(date -u +"%T %D") SQL Server version  ${sql_ver}" >> $pssdiag_log
 				CONN_AUTH_OPTIONS="-U$XsrX -P$XssX"
@@ -310,7 +310,7 @@ sql_connect()
     	if [[ $? -eq 0 ]]; then   	
 			sqlconnect=1;
 			CONN_AUTH_OPTIONS='-E'
-			echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | tee -a $pssdiag_log
+			echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 			sql_ver=$("$SQLCMD" -S$SQL_SERVER_NAME -E -C -Q"PRINT CONVERT(NVARCHAR(128), SERVERPROPERTY('ProductVersion'))")
 			echo "$(date -u +"%T %D") SQL Server version  ${sql_ver}" >> $pssdiag_log
 		else

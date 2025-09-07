@@ -70,10 +70,10 @@ sql_collect_config()
         "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Configuration.sql" -o"$outputdir/${1}_${2}_SQL_Configuration_Shutdown.out"
 
         #echo -e "$(date -u +"%T %D") Collecting SQL traces information at Shutdown..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Existing_xel_profiler_traces.sql" -o"$outputdir/${1}_${2}_SQL_an_ExistingProfilerXeventTraces.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_active_profiler_xe_traces.sql" -o"$outputdir/${1}_${2}_SQL_ActiveProfilerXeventTraces.out"
 
         echo -e "$(date -u +"%T %D") Collecting SQL MiscDiag information at Shutdown..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_MicsDiaginfo.sql" -o"$outputdir/${1}_${2}_SQL__MiscDiagInfo.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_MiscDiaginfo.sql" -o"$outputdir/${1}_${2}_SQL_MiscDiagInfo.out"
 }
 
 sql_collect_linux_snapshot()

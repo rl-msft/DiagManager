@@ -540,7 +540,7 @@ else
         COLLECT_SQL="YES"
 fi
 
-echo -e "\x1B[2;34m========================================== Checking Prerequisites ==========================================\x1B[0m" | tee -a $pssdiag_log
+echo -e "\x1B[2;34m========================================== Checking Prerequisites ==========================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 
 
 # check if we have all pre-requisite to perform data collection
