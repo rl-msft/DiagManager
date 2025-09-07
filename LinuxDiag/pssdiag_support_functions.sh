@@ -220,7 +220,7 @@ get_servicemanager_and_sqlservicestatus()
 
 sql_connect()
 {
-	echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+	echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 
 	MAX_ATTEMPTS=3
 	attempt_num=1
@@ -287,13 +287,13 @@ sql_connect()
 			if [[ $? -eq 0 ]]; then
 				sqlconnect=1
 				echo ""
-				echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+				echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 				sql_ver=$("$SQLCMD" -S$SQL_SERVER_NAME -U$XsrX -P$XssX -C -Q"PRINT CONVERT(NVARCHAR(128), SERVERPROPERTY('ProductVersion'))")
 				echo "$(date -u +"%T %D") SQL Server version  ${sql_ver}" >> $pssdiag_log
 				CONN_AUTH_OPTIONS="-U$XsrX -P$XssX"
 				break
 			else
-				echo -e "\x1B[31mLogin Attempt failed - Attempt ${attempt_num} of ${MAX_ATTEMPTS}, Please try again\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+				echo -e "\x1B[31mLogin Attempt failed - Attempt ${attempt_num} of ${MAX_ATTEMPTS}, Please try again\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 			fi
 			attempt_num=$(( attempt_num + 1 ))
 		done
@@ -310,12 +310,12 @@ sql_connect()
     	if [[ $? -eq 0 ]]; then   	
 			sqlconnect=1;
 			CONN_AUTH_OPTIONS='-E'
-			echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+			echo -e "\x1B[32m$(date -u +"%T %D") Connection was successful....\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 			sql_ver=$("$SQLCMD" -S$SQL_SERVER_NAME -E -C -Q"PRINT CONVERT(NVARCHAR(128), SERVERPROPERTY('ProductVersion'))")
 			echo "$(date -u +"%T %D") SQL Server version  ${sql_ver}" >> $pssdiag_log
 		else
 			#in case AD Authentication fails, try again using SQL Authentication for this particular instance 
-			echo -e "\x1B[33mWarning: AD Authentication failed for ${1} ${2}, refer to the above lines for errors, switching to SQL Authentication for ${1} ${2}" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+			echo -e "\x1B[33mWarning: AD Authentication failed for ${1} ${2}, refer to the above lines for errors, switching to SQL Authentication for ${1} ${2}" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 			sql_connect ${1} ${2} ${3} "SQL"
 		fi
 	fi

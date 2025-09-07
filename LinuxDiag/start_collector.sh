@@ -178,13 +178,14 @@ chmod a+w $working_dir/output
 pssdiag_log="$outputdir/pssdiag.log"
 exec 2> >(tee -a $pssdiag_log >&2) 
 
+
 # Checks: if we run with SUDO and not inside a container, and provide the warning.
 if [ -z "$SUDO_USER" ] && [ "$is_instance_inside_container_active" = "NO" ]; then
-	echo -e "\e[31mWarning: PSSDiag was started without elevated (sudo) permissions.\e[0m" | tee -a "$pssdiag_log"
-	echo -e "\e[31mElevated (sudo) permissions are required for PSSDiag to collect complete diagnostic data.\e[0m" | tee -a "$pssdiag_log"
-	echo -e "\e[31mWithout elevated permissions, most OS and SQL Server log collectors will fail.\e[0m" | tee -a "$pssdiag_log"
-	echo -e "\e[31mT-SQL collectors will fail for instances running on non-default ports.\e[0m" | tee -a "$pssdiag_log"
-	echo -e "\e[31mT-SQL collectors will also fail for SQL Server containers.\e[0m" | tee -a "$pssdiag_log"
+	echo -e "\e[31mWarning: PSSDiag was started without elevated (sudo) permissions.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31mElevated (sudo) permissions are required for PSSDiag to collect complete diagnostic data.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31mWithout elevated permissions, most OS and SQL Server log collectors will fail.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31mT-SQL collectors will fail for instances running on non-default ports.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31mT-SQL collectors will also fail for SQL Server containers.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	read -p "Do you want to continue anyway? (y/n): " choice < /dev/tty 2> /dev/tty
 	case "$choice" in
 		y|Y ) ;;
@@ -334,8 +335,8 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 
 		#Check if scenario is set to one of the performance-impacting options
 		if [[ "$scenario" == "sql_perf_detailed.scn" ]]; then
-	    echo -e "\033[0;31mAre you sure you want to use scenario: $scenario?\033[0m" | tee -a $pssdiag_log
-    	echo -e "\033[0;31mThis will collect performance data at the statement level, which may affect server performance.\033[0m" | tee -a $pssdiag_log
+	    echo -e "\033[0;31mAre you sure you want to use scenario: $scenario?\033[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+    	echo -e "\033[0;31mThis will collect performance data at the statement level, which may affect server performance.\033[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 
 			read -p "Do you want to continue? (yes/no): " choice
 
@@ -474,8 +475,8 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 
 		#Check if scenario is set to one of the performance-impacting options
 		if [[ "$scenario" == "sql_perf_detailed_kube.scn" ]]; then
-	    echo -e "\033[0;31mAre you sure you want to use scenario: $scenario?\033[0m" | tee -a $pssdiag_log
-    	echo -e "\033[0;31mThis will collect performance data at the statement level, which may affect server performance.\033[0m" | tee -a $pssdiag_log
+	    echo -e "\033[0;31mAre you sure you want to use scenario: $scenario?\033[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+    	echo -e "\033[0;31mThis will collect performance data at the statement level, which may affect server performance.\033[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 
 			read -p "Do you want to continue? (yes/no): " choice
 
@@ -540,7 +541,7 @@ else
         COLLECT_SQL="YES"
 fi
 
-echo -e "\x1B[2;34m========================================== Checking Prerequisites ==========================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+echo -e "\x1B[2;34m========================================== Checking Prerequisites ==========================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 
 
 # check if we have all pre-requisite to perform data collection
@@ -555,7 +556,7 @@ fi
 #get copy of current config
 cp pssdiag*.conf $working_dir/output
 
-echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 echo "$(date -u +"%T %D") PSSDiag Executed with sudo: $([ -n "$SUDO_USER" ] && echo "YES" || echo "NO")" >> $pssdiag_log
 echo "$(date -u +"%T %D") PSSDiag version: ${script_version}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Executing PSSDiag on: ${HOSTNAME}"  >> $pssdiag_log
@@ -582,7 +583,7 @@ echo "$(date -u +"%T %D") OS Distribution: $(grep '^ID=' /etc/os-release | cut -
 echo "$(date -u +"%T %D") OS Kernel: $(uname -r)" >> $pssdiag_log
 echo "$(date -u +"%T %D") BASH_VERSION: ${BASH_VERSION}" >> $pssdiag_log
 
-echo -e "\x1B[2;34m============================================= Starting PSSDiag =============================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+echo -e "\x1B[2;34m============================================= Starting PSSDiag =============================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 
 
 # if we just need a snapshot of logs, we do not need to invoke background collectors
@@ -631,12 +632,12 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 		SQL_LISTEN_PORT=$(get_sql_listen_port "host_instance")
 		#SQL_SERVER_NAME="$HOSTNAME,$SQL_LISTEN_PORT"
 		#echo -e "" | tee -a $pssdiag_log
-		echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from host instance $HOSTNAME and port ${SQL_LISTEN_PORT}...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+		echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from host instance $HOSTNAME and port ${SQL_LISTEN_PORT}...\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 		sql_connect "host_instance" "${HOSTNAME}" "${SQL_LISTEN_PORT}" "${authentication_mode}"
 		sqlconnect=$?
 		if [[ $sqlconnect -ne 1 ]]; then
-			echo -e "\x1B[31mTesting the connection to host instance using $authentication_mode authentication failed." | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
-			echo -e "Please refer to the above lines for errors...\x1B[0m" | tee -a $pssdiag_log
+			echo -e "\x1B[31mTesting the connection to host instance using $authentication_mode authentication failed." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+			echo -e "Please refer to the above lines for errors...\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 		else
 			sql_collect_perfstats "${HOSTNAME}" "host_instance"
 			sql_collect_counters "${HOSTNAME}" "host_instance"
@@ -647,8 +648,6 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 			sql_collect_config "${HOSTNAME}" "host_instance"
 			sql_collect_linux_snapshot "${HOSTNAME}" "host_instance"
 			sql_collect_perfstats_snapshot "${HOSTNAME}" "host_instance"
-
-
 		fi
 	fi
 fi
@@ -660,12 +659,12 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 	if [ "${is_instance_inside_container_active}" == "YES" ]; then
 	    SQL_SERVER_NAME="$HOSTNAME,1433"
 		#echo -e "" | tee -a $pssdiag_log
-		echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from instance $HOSTNAME and port 1433...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+		echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from instance $HOSTNAME and port 1433...\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 		sql_connect "instance" "${HOSTNAME}" "1433" "${authentication_mode}"
 		sqlconnect=$?
 		if [[ $sqlconnect -ne 1 ]]; then
-			echo -e "\x1B[31mTesting the connection to instance using $authentication_mode authentication failed." | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
-			echo -e "Please refer to the above lines for errors...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+			echo -e "\x1B[31mTesting the connection to instance using $authentication_mode authentication failed." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+			echo -e "Please refer to the above lines for errors...\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 		else
 			sql_collect_perfstats "${HOSTNAME}" "instance"
 			sql_collect_counters "${HOSTNAME}" "instance"
@@ -691,12 +690,12 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
             get_docker_mapped_port "${dockerid}"
  	        #SQL_SERVER_NAME="$dockername,$dockerport"
 			#echo -e "" | tee -a $pssdiag_log
-			echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from container instance ${dockername} and port ${dockerport}\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+			echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from container instance ${dockername} and port ${dockerport}\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	        sql_connect "container_instance" "${dockername}" "${dockerport}" "${authentication_mode}"
         	sqlconnect=$?
 	        if [[ $sqlconnect -ne 1 ]]; then
-        	        echo -e "\x1B[31mTesting the connection to container instance using $authentication_mode authentication failed." | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
-					echo -e "Please refer to the above lines for errors...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+        	        echo -e "\x1B[31mTesting the connection to container instance using $authentication_mode authentication failed." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+					echo -e "Please refer to the above lines for errors...\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	        else
            	    sql_collect_perfstats "${dockername}" "container_instance"      
 				sql_collect_counters "${dockername}" "container_instance"
@@ -718,12 +717,12 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                 	get_docker_mapped_port "${dockerid}"
 	                #SQL_SERVER_NAME="$dockername,$dockerport"
 					#echo -e ""  | tee -a $pssdiag_log
-					echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from container_instance ${dockername} and port ${dockerport}\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+					echo -e "\x1B[7m$(date -u +"%T %D") Collecting startup information from container_instance ${dockername} and port ${dockerport}\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	                sql_connect "container_instance" "${dockername}" "${dockerport}" "${authentication_mode}"
         	        sqlconnect=$?
                 	if [[ $sqlconnect -ne 1 ]]; then
-                        	echo -e "\x1B[31mTesting the connection to container instance using $authentication_mode authentication failed." | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
-							echo -e "Please refer to the above lines for connectivity and authentication errors...\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+                        	echo -e "\x1B[31mTesting the connection to container instance using $authentication_mode authentication failed." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+							echo -e "Please refer to the above lines for connectivity and authentication errors...\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	                else
 						sql_collect_perfstats "${dockername}" "container_instance"
                 	    sql_collect_counters "${dockername}" "container_instance"
@@ -750,16 +749,16 @@ printf "%s\n" "$anchorpid" >> $outputdir/pssdiag_stoppids_os_collectors.log
 pgrep -P $anchorpid  >> $outputdir/pssdiag_stoppids_os_collectors.log
 # anchor
 
-echo -e "\x1B[2;34m==============================  Startup Completd, Data Collection in Progress ==============================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+echo -e "\x1B[2;34m==============================  Startup Completd, Data Collection in Progress ==============================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 echo -e "" | tee -a $pssdiag_log
-echo -e "\033[0;33m############################################################################################################\033[0;31m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
-echo -e "\033[0;33m#                 Please reproduce the problem now and then stop data collection afterwards                #\033[0;31m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
-echo -e "\033[0;33m############################################################################################################\033[0;31m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+echo -e "\033[0;33m############################################################################################################\033[0;31m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+echo -e "\033[0;33m#                 Please reproduce the problem now and then stop data collection afterwards                #\033[0;31m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+echo -e "\033[0;33m############################################################################################################\033[0;31m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 echo -e "" | tee -a $pssdiag_log
 if [ "${is_instance_inside_container_active}" == "NO" ]; then
-	echo -e "\033[1;33m    Performance collectors have started in the background. to stop them run 'sudo ./stop_collector.sh'...   \033[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+	echo -e "\033[1;33m    Performance collectors have started in the background. to stop them run 'sudo ./stop_collector.sh'...   \033[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 else
-	echo -e "\033[1;33m    Performance collectors have started in the background. to stop them run './stop_collector.sh'...   \033[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
+	echo -e "\033[1;33m    Performance collectors have started in the background. to stop them run './stop_collector.sh'...   \033[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 fi
 echo -e "" | tee -a $pssdiag_log
 exit 0

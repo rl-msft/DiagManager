@@ -34,8 +34,8 @@ fi
 anchor_check=`ps aux | grep -i "pssdiag_anchor.sh" | grep -v "grep" | wc -l`
 if (( "$anchor_check" >= 1 ))
 	then
-		echo -e "\x1B[31mPSSDIAG is already running on this system. Only one instance of PSSDIAG is allowed to execute."  | tee -a $pssdiag_log
-		echo -e "Please stop the current run of PSSDIAG using the stop_collector script and then restart the collection. \x1B[0m" | tee -a $pssdiag_log
+		echo -e "\x1B[31mPSSDIAG is already running on this system. Only one instance of PSSDIAG is allowed to execute."  | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+		echo -e "Please stop the current run of PSSDIAG using the stop_collector script and then restart the collection. \x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 		exit 1
 	else
 		# we are good to continue
@@ -52,8 +52,8 @@ else
 fi
 if [[ "$home_directory_check" == 1 ]]
 	then
-		echo -e "\x1B[31mRunning PSSDiag from home directory is not supported."  | tee -a $pssdiag_log
-		echo -e "Please use another location, such as /tmp/pssdiag. \x1B[0m" | tee -a $pssdiag_log
+		echo -e "\x1B[31mRunning PSSDiag from home directory is not supported."  | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+		echo -e "Please use another location, such as /tmp/pssdiag. \x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 		exit 1
 	else
 		# we are good to continue
@@ -65,9 +65,9 @@ fi
 if ( command -v klist 2>&1 >/dev/null ); then 
 	check_ad_cache=$(klist -l | tail -n +3 | awk '!/Expired/' | wc -l)
 	if [[ "$check_ad_cache" == 0 ]] && [[ "${4}" == "AD" ]]; then
-		echo -e "\x1B[33mWarning: AD Authentication was selected as Authention mode to connect to sql, however, no Kerberos credentials found in default cache, they may have expired"  | tee -a $pssdiag_log
-		echo -e "Warning: AD Authentication will fail" | tee -a $pssdiag_log
-		echo -e "to correct this, run 'sudo kinit user@DOMAIN.COM' in a separate terminal with AD user that is allowed to connect to sql server, then press enter in this terminal. \x1B[0m"  | tee -a $pssdiag_log 
+		echo -e "\x1B[33mWarning: AD Authentication was selected as Authentication mode to connect to sql, however, no Kerberos credentials found in default cache, they may have expired"  | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+		echo -e "Warning: AD Authentication will fail" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+		echo -e "to correct this, run 'sudo kinit user@DOMAIN.COM' in a separate terminal with AD user that is allowed to connect to sql server, then press enter in this terminal. \x1B[0m"  | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 		read -p "Press enter to continue" < /dev/tty 2> /dev/tty
 	fi
 fi
@@ -79,9 +79,9 @@ if ( command -v klist 2>&1 >/dev/null ); then
 		check_ad_cache=$(klist -l | tail -n +3 | awk '!/Expired/' | wc -l)
 		if [[ "$check_ad_cache" == 0 ]]
 		then
-			echo -e "\x1B[33mWarning: No Kerberos credentials found in default cache."  | tee -a $pssdiag_log
-			echo -e "\x1B[33mWarning: AD collectors will not be able to collect the key version number (kvno) information for host and SQL service accounts"  | tee -a $pssdiag_log
-			echo -e "To collect kvno information, run 'sudo kinit user@DOMAIN.COM' in a separate terminal, then press enter in this terminal.\x1B[0m" | tee -a $pssdiag_log
+			echo -e "\x1B[33mWarning: No Kerberos credentials found in default cache."  | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+			echo -e "\x1B[33mWarning: AD collectors will not be able to collect the key version number (kvno) information for host and SQL service accounts" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+			echo -e "To collect kvno information, run 'sudo kinit user@DOMAIN.COM' in a separate terminal, then press enter in this terminal.\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 			read -p "To ignore this warning press enter." < /dev/tty 2> /dev/tty
 			#read -p "Press enter to continue" < /dev/tty 2> /dev/tty
 		fi
@@ -96,14 +96,14 @@ if ( command -v curl 2>&1 >/dev/null ); then
 	publish_version_s=$(date -d "${publish_script_version}" +'%s')
 	current_version_s=$(date -d "${script_version}" +'%s')
 	if [[ $publish_version_s > $current_version_s ]]; then
-		echo -e "\x1B[33mA new version of PSSDiag for Linux is now available. You can find it at the following link https://github.com/microsoft/DiagManager/releases?q=Linux&expanded=true.\x1B[0m" | tee -a $pssdiag_log
+		echo -e "\x1B[33mA new version of PSSDiag for Linux is now available. You can find it at the following link https://github.com/microsoft/DiagManager/releases?q=Linux&expanded=true.\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	fi  
 fi
 
 # check if bzip2 is installed
 check_bzip2="0"
 if ( !( hash bzip2 2>/dev/null ) ); then
-        echo -e "\x1B[31mThe program bzip2 is not installed on this system and is required for the data collection." | tee -a $pssdiag_log
+        echo -e "\x1B[31mThe program bzip2 is not installed on this system and is required for the data collection." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
         check_bzip2="0"
 else
         check_bzip2="1"
@@ -113,7 +113,7 @@ fi
 # check if sqlcmd is installed, we need this to execute TSQL scripts [for future we need to expand or make generic to use any available sql command line tool]
 check_sqlcmd="0"
 if [[ $SQLCMD == "" ]] && [[ "$PRE_CHECK_SQL" == "YES" ]] ; then
-	echo -e "\x1B[31mThe program sqlcmd from mssql-tools18 package is not installed on this system and is required for the data collection." | tee -a $pssdiag_log
+	echo -e "\x1B[31mThe program sqlcmd from mssql-tools18 package is not installed on this system and is required for the data collection." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	check_sqlcmd="0"
 else
 	check_sqlcmd="1"
@@ -122,7 +122,7 @@ fi
 # check if iotop is installed, we need this to capture io related metrics from the system
 check_iotop="0"
 if ( !( hash iotop 2>/dev/null ) && ( [[ "$PRE_COLLECT_OS_COUNTERS" == "YES"  ]] ) ); then
-        echo -e "\x1B[31mThe program iotop is not installed on this system and is required for the data collection." | tee -a $pssdiag_log
+        echo -e "\x1B[31mThe program iotop is not installed on this system and is required for the data collection." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
         check_iotop="0"
 else
         check_iotop="1"
@@ -131,7 +131,7 @@ fi
 # check if sysstat is installed, we need this to capture various performance metrics from the system
 check_sysstat="0"
 if ( ( !( hash iostat 2>/dev/null ) || !( hash mpstat 2>/dev/null ) || !( hash pidstat 2>/dev/null ) || !( hash sar 2>/dev/null ) ) &&  ( [[ "$PRE_COLLECT_OS_COUNTERS" == "YES" ]] ) ); then
-        echo -e "\x1B[31mThe program's iostat/mpstat/pidstat/sar from sysstat package is not installed on this system and is required for the data collection." | tee -a $pssdiag_log
+        echo -e "\x1B[31mThe program's iostat/mpstat/pidstat/sar from sysstat package is not installed on this system and is required for the data collection." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
         check_sysstat="0"
 else
         check_sysstat="1"
@@ -139,12 +139,12 @@ fi
 
 # check if lsof is present and warn about it, this is used for process data collection in machine config scripts
 if ( !( hash lsof 2>/dev/null ) ); then
-	echo -e "\x1B[31mThe program lsof is not installed on this system and is used for the data collection, will continue without this.\x1B[0m" | tee -a $pssdiag_log
+	echo -e "\x1B[31mThe program lsof is not installed on this system and is used for the data collection, will continue without this.\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 fi
 
 # now ask the user what they want to do if any program is absent
 if (( ("$check_sqlcmd" == "0") || ( "$check_iotop" == "0" ) || ( "$check_sysstat" == "0" ) || ( "$check_bzip2" == "0" ) )); then
-	echo -e "PSSDiag cannot proceed because one or more required prerequisite programs are missing. Please install all required components before launching PSSDiag again.! \x1B[0m" | tee -a $pssdiag_log
+	echo -e "PSSDiag cannot proceed because one or more required prerequisite programs are missing. Please install all required components before launching PSSDiag again.! \x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	exit 1
 else
 	# we are good with all re-req checks, we can continue with data collection
