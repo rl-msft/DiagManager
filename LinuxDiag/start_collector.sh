@@ -154,7 +154,7 @@ if [[ -d "$outputdir" ]]; then
   esac
 fi
 
-# Checks: Make sure we can overwrite the output directory
+# Checks: Make sure the output directory is not owned by root
 if [ "$(id -u)" -ne 0 ]; then
     if [ -e "$outputdir" ]; then
         owner=$(stat -c '%U' "$outputdir")  # Use -f '%Su' on macOS
@@ -172,7 +172,12 @@ if [ -d "$outputdir" ]; then
 fi
 mkdir -p $working_dir/output
 chmod a+w $working_dir/output
-
+if [ "$EUID" -eq 0 ]; then
+  group=$(id -gn "$SUDO_USER")
+  chown "$SUDO_USER:$group" "$outputdir" -R
+else
+	chown $(id -u):$(id -g) "$outputdir" -R
+fi
 
 #setting up the log file, and set the directive to send errors presented to user to the log file.
 pssdiag_log="$outputdir/pssdiag.log"
@@ -555,6 +560,18 @@ fi
 
 #get copy of current config
 cp pssdiag*.conf $working_dir/output
+
+#get the user that started pssdiag and save it to log file in the current directory NOT the output directory
+if [ "$EUID" -eq 0 ]; then
+    echo "SUDO:YES" > "$outputdir/pssdiag_intiated_as_user.log"
+	chown $(id -u "$SUDO_USER"):$(id -g "$SUDO_USER") "$outputdir/pssdiag_intiated_as_user.log"
+	echo "SUDO_USER:$SUDO_USER" >> "$outputdir/pssdiag_intiated_as_user.log"
+else
+    echo "SUDO:NO" > "$outputdir/pssdiag_intiated_as_user.log"
+	chown $(id -u):$(id -g) "$outputdir/pssdiag_intiated_as_user.log"
+	echo "USER:$(id -un)" >> "$outputdir/pssdiag_intiated_as_user.log"
+	echo "GROUP:$(id -gn)" >> "$outputdir/pssdiag_intiated_as_user.log"
+fi
 
 echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 echo "$(date -u +"%T %D") PSSDiag Executed with sudo: $([ -n "$SUDO_USER" ] && echo "YES" || echo "NO")" >> $pssdiag_log

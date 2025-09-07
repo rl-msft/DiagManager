@@ -16,6 +16,12 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
 # we need to collect logs from containers
 # create a subfolder to collect all logs from containers
 mkdir -p $outputdir/log
+if [ "$EUID" -eq 0 ]; then
+  group=$(id -gn "$SUDO_USER")
+  chown "$SUDO_USER:$group" "$outputdir" -R
+else
+	chown $(id -u):$(id -g) "$outputdir" -R
+fi
 
 	if [[ "$COLLECT_CONTAINER" != "ALL" ]]; then
 	# we need to process just the specific container
