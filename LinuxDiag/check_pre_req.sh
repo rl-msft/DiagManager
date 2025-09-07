@@ -79,11 +79,9 @@ if ( command -v klist 2>&1 >/dev/null ); then
 		check_ad_cache=$(klist -l | tail -n +3 | awk '!/Expired/' | wc -l)
 		if [[ "$check_ad_cache" == 0 ]]
 		then
-			echo -e "\x1B[33mWarning: No Kerberos credentials found in default cache."  | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-			echo -e "\x1B[33mWarning: AD collectors will not be able to collect the key version number (kvno) information for host and SQL service accounts" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-			echo -e "To collect kvno information, run 'sudo kinit user@DOMAIN.COM' in a separate terminal, then press enter in this terminal.\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-			read -p "To ignore this warning press enter." < /dev/tty 2> /dev/tty
-			#read -p "Press enter to continue" < /dev/tty 2> /dev/tty
+			echo -e "\x1B[33mWarning: No Kerberos credentials found in default cache.\x1B[0m"  | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+			echo -e "\x1B[33mWarning: AD collectors will not be able to collect the key version number (kvno) information for host and SQL service accounts.\x1B[0m"  | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+			echo -e "\x1B[33mWarning: To collect kvno information, run 'sudo kinit user@DOMAIN.COM' before running PSSDiag.\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 		fi
 	fi
 fi

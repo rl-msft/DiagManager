@@ -146,7 +146,7 @@ outputdir="$working_dir/output"
 #Checks: if output directory exists, if yes prompt to overwrite
 if [[ -d "$outputdir" ]]; then
   echo -e "\e[31mOutput directory {$outputdir} exists..\e[0m"
-  read -p "Do you want to overwrite? (y/n): " choice 
+  read -p "Do you want to overwrite? (y/n): " choice < /dev/tty 2> /dev/tty
   case "$choice" in
     y|Y ) ;;
     n|N ) exit 1;;
