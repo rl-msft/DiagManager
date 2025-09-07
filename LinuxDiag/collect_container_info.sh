@@ -46,7 +46,7 @@ if [ "${is_container_runtime_service_active}" == "YES" ]; then
         echo "" >> $outputdir/${HOSTNAME}_os_docker_info
 
         echo "=======docker stats=======" >> $outputdir/${HOSTNAME}_os_docker_info
-        sudo docker stats --all --no-trunc --no-stream >> $outputdir/${HOSTNAME}_os_docker_info
+        docker stats --all --no-trunc --no-stream >> $outputdir/${HOSTNAME}_os_docker_info
         echo "" >> $outputdir/${HOSTNAME}_os_docker_info
 
         echo "=======docker info=======" >> $outputdir/${HOSTNAME}_os_docker_info

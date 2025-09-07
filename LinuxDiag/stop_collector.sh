@@ -393,6 +393,14 @@ if [[ "$COLLECT_SQL_BEST_PRACTICES" == "YES" ]]; then
         ./sql_linux_known_issues_analyzer.sh "$SQL_SERVER_NAME" "$CONN_AUTH_OPTIONS" >> $outputdir/${HOSTNAME}_host_instance_SQL_Linux_Known_Issues_Analyzer.out
 fi
 
+if [ "$EUID" -ne 0 ]; then
+# for minimal collecton, where user didnt use sudo, we cant compress the output file as it may contains files with mssql user, like XEL and TRC files.
+  echo -e "\x1B[2;34m============================================================================================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+  echo "Data collected in the output folder, Compress the output folder with sudo to include all the files." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+  echo -e "\x1B[2;34m=================================================== Done ===================================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+  exit 0
+fi
+
 echo -e "\x1B[2;34m=======================================  Creating Compressed Archive =======================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 #zip up output directory
 short_hostname="${HOSTNAME%%.*}"

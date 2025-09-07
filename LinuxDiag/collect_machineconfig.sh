@@ -224,7 +224,7 @@ echo "" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
 get_container_instance_status
 if [ "${is_container_runtime_service_active}" == "YES" ]; then
     echo "======Containers instance======" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
-    sudo docker stats --all --no-trunc --no-stream >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info   
+    docker stats --all --no-trunc --no-stream >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info   
     echo "" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info 
 fi
 get_host_instance_status
