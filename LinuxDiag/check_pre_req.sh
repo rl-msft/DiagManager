@@ -60,19 +60,19 @@ if [[ "$home_directory_check" == 1 ]]
 		sleep 0s
 fi
 
-# Check if AD Authenticaiton was selected but no AD tickets are available
+#Check if AD Authenticaiton was selected but no AD tickets are available
 #check if klist exists, in case running inside container
 if ( command -v klist 2>&1 >/dev/null ); then 
 	check_ad_cache=$(klist -l | tail -n +3 | awk '!/Expired/' | wc -l)
 	if [[ "$check_ad_cache" == 0 ]] && [[ "${4}" == "AD" ]]; then
 		echo -e "\x1B[33mWarning: AD Authentication was selected as Authention mode to connect to sql, however, no Kerberos credentials found in default cache, they may have expired"  | tee -a $pssdiag_log
 		echo -e "Warning: AD Authentication will fail" | tee -a $pssdiag_log
-		echo -e "to correct this, run 'sudo kinit user@DOMAIN.COM' in a separate terminal with AD user that is allowed to connect to sql server, then press enter in this terminal. \x1B[0m"  | tee -a $pssdiag_log
-		read -p "Press enter to continue" 
+		echo -e "to correct this, run 'sudo kinit user@DOMAIN.COM' in a separate terminal with AD user that is allowed to connect to sql server, then press enter in this terminal. \x1B[0m"  | tee -a $pssdiag_log 
+		read -p "Press enter to continue" < /dev/tty 2> /dev/tty
 	fi
 fi
 
-# Check if we have AD klist entries, logged to AD 
+#Check if we have AD klist entries, logged to AD 
 #check if klist exists, in case running inside container
 if ( command -v klist 2>&1 >/dev/null ); then 
 	if [ -e "/etc/krb5.conf" ]; then
@@ -81,9 +81,9 @@ if ( command -v klist 2>&1 >/dev/null ); then
 		then
 			echo -e "\x1B[33mWarning: No Kerberos credentials found in default cache."  | tee -a $pssdiag_log
 			echo -e "\x1B[33mWarning: AD collectors will not be able to collect the key version number (kvno) information for host and SQL service accounts"  | tee -a $pssdiag_log
-			echo -e "To collect kvno information, run 'sudo kinit user@DOMAIN.COM' in a separate terminal, then press enter in this terminal." | tee -a $pssdiag_log
-			echo -e "To ignore this warning press enter.\x1B[0m" | tee -a $pssdiag_log
-			read -p "Press enter to continue"
+			echo -e "To collect kvno information, run 'sudo kinit user@DOMAIN.COM' in a separate terminal, then press enter in this terminal.\x1B[0m" | tee -a $pssdiag_log
+			read -p "To ignore this warning press enter." < /dev/tty 2> /dev/tty
+			#read -p "Press enter to continue" < /dev/tty 2> /dev/tty
 		fi
 	fi
 fi

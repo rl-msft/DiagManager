@@ -126,6 +126,7 @@ sql_collect_perfstats_snapshot()
 #################################
 # start of main script execution
 #################################
+
 echo "" 
 
 get_host_instance_status
@@ -134,7 +135,7 @@ pssdiag_inside_container_get_instance_status
 get_wsl_instance_status
 find_sqlcmd
 
-# check if user passed any parameter to the script 
+#Checks: if user passed any parameter to the script 
 scenario=${1,,}
 authentication_mode=${2^^}
 
@@ -142,7 +143,7 @@ authentication_mode=${2^^}
 working_dir="$PWD"
 outputdir="$working_dir/output"
 
-#Check if output directory exists, if yes prompt to overwrite
+#Checks: if output directory exists, if yes prompt to overwrite
 if [[ -d "$outputdir" ]]; then
   echo -e "\e[31mOutput directory {$outputdir} exists..\e[0m"
   read -p "Do you want to overwrite? (y/n): " choice 
@@ -153,7 +154,7 @@ if [[ -d "$outputdir" ]]; then
   esac
 fi
 
-# Make sure I can overwrite the output directory
+# Checks: Make sure we can overwrite the output directory
 if [ "$(id -u)" -ne 0 ]; then
     if [ -e "$outputdir" ]; then
         owner=$(stat -c '%U' "$outputdir")  # Use -f '%Su' on macOS
@@ -173,11 +174,11 @@ mkdir -p $working_dir/output
 chmod a+w $working_dir/output
 
 
-#setuping the log file, and set the directive to send error to the log file.
+#setting up the log file, and set the directive to send errors presented to user to the log file.
 pssdiag_log="$outputdir/pssdiag.log"
 exec 2> >(tee -a $pssdiag_log >&2) 
 
-# Check if we run with SUDO and not inside a container
+# Checks: if we run with SUDO and not inside a container, and provide the warning.
 if [ -z "$SUDO_USER" ] && [ "$is_instance_inside_container_active" = "NO" ]; then
 	echo -e "\e[31mWarning: PSSDiag was started without elevated (sudo) permissions.\e[0m" | tee -a "$pssdiag_log"
 	echo -e "\e[31mElevated (sudo) permissions are required for PSSDiag to collect complete diagnostic data.\e[0m" | tee -a "$pssdiag_log"
@@ -273,7 +274,7 @@ if [[ -n "$scenario" ]]; then
 	fi
 fi
 
-#if scenario has not been passed and we are running with systemd system
+#if scenario has not been passed and we are running with systemd system, present the user with options
 if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]]; then
 	echo -e "\x1B[2;34m============================================ Select Run Scenario ===========================================\x1B[0m" 
 	echo "Run Scenario's:"
@@ -304,6 +305,7 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 	do
 		read -r -p $'\e[1;34mSelect a Scenario [1-5] (Enter to select the default "static_collect.scn"): \e[0m' scn_user_selected < /dev/tty 2> /dev/tty
 
+		#Set the defaul scnario to 1 if user just hits enter
 		scn_user_selected=${scn_user_selected:-1}
 
 		#check if we have a valid selection
@@ -312,7 +314,7 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
     		exit 1
 		fi
 
-		
+		#Set the scenario variable based on user selection
 		if [[ ${scn_user_selected} == 1 ]]; then
 			scenario="static_collect.scn"
 		fi
@@ -354,6 +356,7 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 		fi
 
 		CONFIG_FILE="./${scenario}"
+
 		#echo "Reading configuration values from config scenario file $CONFIG_FILE" 
 		echo "Reading configuration values from config scenario file $CONFIG_FILE" 
 		if [[ -f $CONFIG_FILE ]]; then
@@ -367,7 +370,7 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 	done 
 fi
 
-#if authentication_mode has not been passed and we are running with systemd system
+#if authentication_mode has not been passed and we are running with systemd system, ask the user for input
 if [[ -z "$authentication_mode" ]] && [[ "$is_instance_inside_container_active" == "NO" ]]; then
 	echo -e "\x1B[2;34m======================================== Select Authentication Mode ========================================\x1B[0m" 
 	echo "Authentication Modes:"
@@ -390,7 +393,17 @@ if [[ -z "$authentication_mode" ]] && [[ "$is_instance_inside_container_active" 
 	while [[ ${auth_mode_selected} != [1-3] ]]
 	do
 		read -r -p $'\e[1;34mSelect an Authentication Method [1-3] (Enter to select the default "SQL"): \e[0m' auth_mode_selected < /dev/tty 2> /dev/tty
+
+		#set the default authentication mode to 1 if user just hits enter
 		auth_mode_selected=${auth_mode_selected:-1}
+
+		#check if we have a valid selection
+		if [[ ! "$auth_mode_selected" =~ ^[1-3]$ ]]; then
+    		echo "Invalid selection. Exiting..."
+    		exit 1
+		fi
+
+		#set the authentication_mode variable based on user selection
 		if [ $auth_mode_selected == 1 ]; then
 			authentication_mode="SQL"
 		fi
@@ -459,7 +472,7 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 		fi
 		echo ""
 
-				#Check if scenario is set to one of the performance-impacting options
+		#Check if scenario is set to one of the performance-impacting options
 		if [[ "$scenario" == "sql_perf_detailed_kube.scn" ]]; then
 	    echo -e "\033[0;31mAre you sure you want to use scenario: $scenario?\033[0m" | tee -a $pssdiag_log
     	echo -e "\033[0;31mThis will collect performance data at the statement level, which may affect server performance.\033[0m" | tee -a $pssdiag_log
