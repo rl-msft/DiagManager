@@ -16,11 +16,11 @@ mkdir -p $PWD/output
 outputdir=$PWD/output
 
 LC_TIME=en_US.UTF-8 iostat -d $OS_COUNTERS_INTERVAL -k -t -x -y > $outputdir/${HOSTNAME}_os_iostat.perf &
-printf "%s\n" "$!" >> $outputdir/pssdiag_stoppids_os_collectors.txt
+printf "%s\n" "$!" >> $outputdir/pssdiag_stoppids_os_collectors.log
 
 if [[ "$EUID" -eq 0 ]]; then
         LC_TIME=en_US.UTF-8 iotop -d $OS_COUNTERS_INTERVAL -k -t -P -o > $outputdir/${HOSTNAME}_os_iotop.perf &
-        printf "%s\n" "$!" >> $outputdir/pssdiag_stoppids_os_collectors.txt
+        printf "%s\n" "$!" >> $outputdir/pssdiag_stoppids_os_collectors.log
 fi
 
 

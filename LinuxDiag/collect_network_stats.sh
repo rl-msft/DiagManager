@@ -17,7 +17,7 @@ mkdir -p $PWD/output
 outputdir=$PWD/output
 
 LC_TIME=en_US.UTF-8 sar -n DEV $OS_COUNTERS_INTERVAL >> $outputdir/${HOSTNAME}_os_network_stats.perf &
-printf "%s\n" "$!" >> $outputdir/pssdiag_stoppids_os_collectors.txt
+printf "%s\n" "$!" >> $outputdir/pssdiag_stoppids_os_collectors.log
 
 
 

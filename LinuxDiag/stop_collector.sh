@@ -70,7 +70,7 @@ sql_collect_config()
         "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Configuration.sql" -o"$outputdir/${1}_${2}_SQL_Configuration_Shutdown.out"
 
         #echo -e "$(date -u +"%T %D") Collecting SQL traces information at Shutdown..." | tee -a $pssdiag_log
-        #"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Existing_xel_profiler_traces.sql" -o"$outputdir/${1}_${2}_SQL_ExistingProfilerXeventTraces.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Existing_xel_profiler_traces.sql" -o"$outputdir/${1}_${2}_SQL_an_ExistingProfilerXeventTraces.out"
 
         echo -e "$(date -u +"%T %D") Collecting SQL MiscDiag information at Shutdown..." | tee -a $pssdiag_log
         "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_MicsDiaginfo.sql" -o"$outputdir/${1}_${2}_SQL__MiscDiagInfo.out"
@@ -156,21 +156,21 @@ NOW=`date +"%m_%d_%Y_%H_%M"`
 
 echo -e "\x1B[2;34m============================================= Stopping PSSDiag =============================================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
 
-if [[ -f $outputdir/pssdiag_stoppids_sql_collectors.txt ]]; then
+if [[ -f $outputdir/pssdiag_stoppids_sql_collectors.log ]]; then
 	echo "$(date -u +"%T %D") Starting to stop background processes that were collecting sql data..." | tee -a $pssdiag_log
-	#cat $outputdir/pssdiag_stoppids_sql_collectors.txt
-	kill -9 `cat $outputdir/pssdiag_stoppids_sql_collectors.txt` 2> /dev/null
-        killedlist=$(awk '{ for (i=1; i<=NF; i++) RtoC[i]= (RtoC[i]? RtoC[i] FS $i: $i) } END{ for (i in RtoC) print RtoC[i] }' $outputdir/pssdiag_stoppids_sql_collectors.txt)
+	#cat $outputdir/pssdiag_stoppids_sql_collectors.log
+	kill -9 `cat $outputdir/pssdiag_stoppids_sql_collectors.log` 2> /dev/null
+        killedlist=$(awk '{ for (i=1; i<=NF; i++) RtoC[i]= (RtoC[i]? RtoC[i] FS $i: $i) } END{ for (i in RtoC) print RtoC[i] }' $outputdir/pssdiag_stoppids_sql_collectors.log)
         echo "$(date -u +"%T %D") Stopping the following PIDs $killedlist" | tee -a $pssdiag_log
-	#rm -f $outputdir/pssdiag_stoppids_sql_collectors.txt 2> /dev/null
+	#rm -f $outputdir/pssdiag_stoppids_sql_collectors.log 2> /dev/null
 fi
-if [[ -f $outputdir/pssdiag_stoppids_os_collectors.txt ]]; then
+if [[ -f $outputdir/pssdiag_stoppids_os_collectors.log ]]; then
 	echo "$(date -u +"%T %D") Starting to stop background processes that were collecting os data..." | tee -a $pssdiag_log
-	#cat $outputdir/pssdiag_stoppids_os_collectors.txt
-	kill -9 `cat $outputdir/pssdiag_stoppids_os_collectors.txt` 2> /dev/null
-        killedlist=$(awk '{ for (i=1; i<=NF; i++) RtoC[i]= (RtoC[i]? RtoC[i] FS $i: $i) } END{ for (i in RtoC) print RtoC[i] }' $outputdir/pssdiag_stoppids_os_collectors.txt)
+	#cat $outputdir/pssdiag_stoppids_os_collectors.log
+	kill -9 `cat $outputdir/pssdiag_stoppids_os_collectors.log` 2> /dev/null
+        killedlist=$(awk '{ for (i=1; i<=NF; i++) RtoC[i]= (RtoC[i]? RtoC[i] FS $i: $i) } END{ for (i in RtoC) print RtoC[i] }' $outputdir/pssdiag_stoppids_os_collectors.log)
         echo "$(date -u +"%T %D") Stopping the following PIDs $killedlist" | tee -a $pssdiag_log
-	#rm -f $outputdir/pssdiag_stoppids_os_collectors.txt 2> /dev/null
+	#rm -f $outputdir/pssdiag_stoppids_os_collectors.log 2> /dev/null
 fi
 
 CONFIG_FILE="./pssdiag_collector.conf"

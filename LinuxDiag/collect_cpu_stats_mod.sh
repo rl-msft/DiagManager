@@ -17,9 +17,9 @@ outputdir=$PWD/output
 
 
 LC_TIME=en_US.UTF-8 mpstat -P ALL $OS_COUNTERS_INTERVAL | awk 'BEGIN{cmd="date  +\"%m/%d/%y %H:%M:%S\""} {cmd|getline D; close(cmd);if($1 = $'\r') $1=D; else $1="" ; $2=""; print $0}' > $outputdir/${HOSTNAME}_os_mpstats_cpu.perf &
-printf "%s\n" "$!" >> $working_dir/pssdiag_stoppids_os_collectors.txt
+printf "%s\n" "$!" >> $working_dir/pssdiag_stoppids_os_collectors.log
 
 LC_TIME=en_US.UTF-8 mpstat -I ALL $OS_COUNTERS_INTERVAL | awk 'BEGIN{cmd="date  +\"%m/%d/%y %H:%M:%S\""} {cmd|getline D; close(cmd);if($1 = $'\r') $1=D; else $1="" ; $2="" ; print $0}' > $outputdir/${HOSTNAME}_os_mpstats_interrupt.perf &
-printf "%s\n" "$!" >> $working_dir/pssdiag_stoppids_os_collectors.txt
+printf "%s\n" "$!" >> $working_dir/pssdiag_stoppids_os_collectors.log
 
 

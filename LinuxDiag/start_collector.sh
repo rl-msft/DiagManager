@@ -12,16 +12,16 @@ sql_collect_perfstats()
                 echo -e "$(date -u +"%T %D") Starting SQL Perf Stats script as a background job...." | tee -a $pssdiag_log
                 `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Perf_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Perf_Stats.out"` &
                 mypid=$!
-                #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.txt
+                #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 		sleep 5s
-                pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.txt
+                pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.log
 
 				echo -e "$(date -u +"%T %D") Starting SQL Linux Stats script as a background job...." | tee -a $pssdiag_log
                 `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Linux_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Stats.out"` &
                 mypid=$!
-                #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.txt
+                #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 		sleep 5s
-                pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.txt
+                pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.log
         fi
 }
 
@@ -34,9 +34,9 @@ sql_collect_counters()
                 echo -e "$(date -u +"%T %D") Starting SQL Performance counter script as a background job.... " | tee -a $pssdiag_log
                 `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Performance_Counters.sql" -o"$outputdir/${1}_${2}_SQL_Performance_Counters.out"` &
                 mypid=$!
-                #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.txt
+                #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 		sleep 5s
-                pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.txt
+                pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.log
         fi
 }
 
@@ -48,9 +48,9 @@ sql_collect_memstats()
                 echo -e "$(date -u +"%T %D") Starting SQL Memory Status script as a background job.... " | tee -a $pssdiag_log
                 `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Mem_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Mem_Stats.out"` &
                 mypid=$!
-                #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.txt
+                #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 		sleep 5s
-                pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.txt
+                pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.log
         fi
 }
 
@@ -62,9 +62,9 @@ sql_collect_custom()
                 for filename in my_custom_collector*.sql; do
                    `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"${filename}" -o"$outputdir/${1}_${2}_${filename}_Output.out"` &
                     mypid=$!
-                    #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.txt
+                    #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 		    sleep 5s
-                    pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.txt
+                    pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.log
                 done
         fi
 }
@@ -74,14 +74,14 @@ sql_collect_xevent()
         #start any XE collection if defined? XE file should be named pssdiag_xevent_.sql.
         if [[ $COLLECT_EXTENDED_EVENTS == [Yy][eE][sS]  ]]; then
                 echo -e "$(date -u +"%T %D") Starting SQL Extended Events collection...  " | tee -a $pssdiag_log
-                "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"${EXTENDED_EVENT_TEMPLATE}.sql" -o"$outputdir/${1}_${2}_pssdiag_xevent.out"
+                "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"${EXTENDED_EVENT_TEMPLATE}.sql" -o"$outputdir/${1}_${2}_pssdiag_xevent.log"
                 cp -f ./pssdiag_xevent_start.template ./pssdiag_xevent_start.sql
 		if [[ "$2" == "host_instance" ]] || [[ "$2" == "instance" ]]; then
 	                sed -i "s|##XeFileName##|${outputdir}/${1}_${2}_pssdiag_xevent.xel|" pssdiag_xevent_start.sql
 		else
                     sed -i "s|##XeFileName##|/var/opt/mssql/log/${1}_${2}_pssdiag_xevent.xel|" pssdiag_xevent_start.sql
 		fi
-                "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_xevent_start.sql" -o"$outputdir/${1}_${2}_pssdiag_xevent_start.out"
+                "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_xevent_start.sql" -o"$outputdir/${1}_${2}_pssdiag_xevent_start.log"
         fi
 }
 
@@ -746,8 +746,8 @@ fi
 # if this anchor script is running already we will not allow another pssdiag run to proceed
 bash ./pssdiag_anchor.sh &
 anchorpid=$!
-printf "%s\n" "$anchorpid" >> $outputdir/pssdiag_stoppids_os_collectors.txt
-pgrep -P $anchorpid  >> $outputdir/pssdiag_stoppids_os_collectors.txt
+printf "%s\n" "$anchorpid" >> $outputdir/pssdiag_stoppids_os_collectors.log
+pgrep -P $anchorpid  >> $outputdir/pssdiag_stoppids_os_collectors.log
 # anchor
 
 echo -e "\x1B[2;34m==============================  Startup Completd, Data Collection in Progress ==============================\x1B[0m" | sed -e 's/\x1b\[[0-9;]*m//g' | tee -a $pssdiag_log
