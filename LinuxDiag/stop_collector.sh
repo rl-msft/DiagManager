@@ -10,7 +10,7 @@ sql_stop_xevent()
 {
 if [[ $COLLECT_EXTENDED_EVENTS == [Yy][eE][sS]  ]]; then
 	echo -e "$(date -u +"%T %D") Stopping Extended events Collection if started..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_xevent_stop.sql" -o"$outputdir/${1}_${2}_Stop_XECollection.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_xevent_stop.sql" -o"$outputdir/${1}_${2}_Stop_XECollection.log"
 fi
 }
 
@@ -18,7 +18,7 @@ sql_stop_trace()
 {
 if [[ $COLLECT_SQL_TRACE == [Yy][eE][sS]  ]]; then
         echo -e "$(date -u +"%T %D") Stopping SQL Trace Collection if started..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_trace_stop.sql" -o"$outputdir/${1}_${2}_Stop_TraceCollection.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_trace_stop.sql" -o"$outputdir/${1}_${2}_Stop_TraceCollection.log"
 fi
 }
 
