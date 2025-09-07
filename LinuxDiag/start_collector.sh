@@ -190,7 +190,8 @@ if [ -z "$SUDO_USER" ] && [ "$is_instance_inside_container_active" = "NO" ]; the
 	echo -e "\e[31mElevated (sudo) permissions are required for PSSDiag to collect complete diagnostic data.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "\e[31mWithout elevated permissions, OS log collection will fail.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "\e[31mWithout elevated permissions, PSSDiag will not able to read mssql.conf to get SQL log file location and port number.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-	echo -e "\e[31mT-SQL collectors will fail for SQL Server containers.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31mWithout elevated permissions, PSSDiag will not able to copy errorlog and dump files..\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31mWithout elevated permissions, T-SQL collectors will fail for SQL Server containers.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	read -p "Do you want to continue anyway? (y/n): " choice < /dev/tty 2> /dev/tty
 	case "$choice" in
 		y|Y ) ;;
