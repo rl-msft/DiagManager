@@ -23,11 +23,15 @@ fi
 #Check if I am running on host/systemd
 if (echo "$(readlink /sbin/init)" | grep systemd >/dev/null 2>&1); then
 	echo "$(date -u +"%T %D") Collecting dmesg log, journalctl, system logs..." | tee -a $pssdiag_log
-	dmesg > $outputdir/${HOSTNAME}_os_dmesg.info 2>/dev/null 
-	journalctl | tail -n1000 > $outputdir/${HOSTNAME}_os.journalctl.info 2>/dev/null 
-	journalctl -u mssql-server > $outputdir/${HOSTNAME}_host_instance_journalctl.info 2>/dev/null 
-	journalctl -u docker > $outputdir/${HOSTNAME}_os_docker.journalctl.info 2>/dev/null 
-	journalctl -u podman > $outputdir/${HOSTNAME}_os_podman.journalctl.info 2>/dev/null 
+
+	# Collect dmesg and journalctl logs only if we run with sudo
+	if [ "$EUID" -eq 0 ]; then
+		dmesg > $outputdir/${HOSTNAME}_os_dmesg.info 2>/dev/null 
+		journalctl | tail -n1000 > $outputdir/${HOSTNAME}_os.journalctl.info 2>/dev/null 
+		journalctl -u mssql-server > $outputdir/${HOSTNAME}_host_instance_journalctl.info 2>/dev/null 
+		journalctl -u docker > $outputdir/${HOSTNAME}_os_docker.journalctl.info 2>/dev/null 
+		journalctl -u podman > $outputdir/${HOSTNAME}_os_podman.journalctl.info 2>/dev/null 
+	fi
 
 	# this is required to figure out version of distro so that System log files are collected appropriately in the following case statement
 	linuxdistro=`cat /etc/os-release | grep -i '^ID=' | head -n1 | awk -F'=' '{print $2}' | sed 's/"//g'`
