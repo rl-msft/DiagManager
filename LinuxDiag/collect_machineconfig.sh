@@ -173,7 +173,7 @@ echo -e "$(date -u +"%T %D") Collecting disk information..." | tee -a $pssdiag_l
 capture_disk_info
 
 
-if [[ $COLLECT_CONTAINER == "YES" ]] ; then 
+if [[ $COLLECT_CONTAINER != "NO" ]] ; then 
     #Capture sqlservr process info for continer instance
     #find the mapping between container sql child process and local sql child process, and get its information
     get_container_instance_status
@@ -224,7 +224,7 @@ echo "======System totals======" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top
 free -h >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
 echo "" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
 
-if [[ $COLLECT_CONTAINER == "YES" ]] ; then 
+if [[ $COLLECT_CONTAINER != "NO" ]] ; then 
     get_container_instance_status
     if [ "${is_container_runtime_service_active}" == "YES" ]; then
         echo "======Containers instance======" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info

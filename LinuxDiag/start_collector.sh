@@ -558,7 +558,7 @@ if command -v podman >/dev/null 2>&1 && podman ps >/dev/null 2>&1; then
 elif command -v docker >/dev/null 2>&1 && docker ps >/dev/null 2>&1; then
     checkContainerCommand="yes"
 fi
-if [[ "$COLLECT_CONTAINER" == "YES" && "$checkContainerCommand" == "NO" ]]; then
+if [[ "$COLLECT_CONTAINER" != "NO" && "$checkContainerCommand" == "NO" ]] ; then
 	COLLECT_CONTAINER="NO"
 fi
 
