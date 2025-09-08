@@ -101,23 +101,25 @@ while IFS='|' read -r db_name physical_name; do
             else
                 using_lvm=0
             fi
+            # Only try to get diskpartition, disk and DpoFua if we have elevated permissions
+            if [ "$EUID" -eq 0 ]; then
+                # Get the diskpartition depending on if we are using LVM
+                if [[ $using_lvm -eq 1 ]]; then
+                    #if we are using LVM then use lvdisplay to get the diskpartition
+                    diskpartition=$(lvdisplay -m "$mount_source" 2>/dev/null | awk '/Physical volume/ {print $3}')
+                    [[ -z "$diskpartition" ]] && diskpartition="-"
+                else
+                    #if we are not using LVM, then its diskpartition already
+                    diskpartition=$mount_source
+                fi
 
-            # Get the diskpartition depending on if we are using LVM
-            if [[ $using_lvm -eq 1 ]]; then
-                #if we are using LVM then use lvdisplay to get the diskpartition
-                diskpartition=$(lvdisplay -m "$mount_source" 2>/dev/null | awk '/Physical volume/ {print $3}')
-                [[ -z "$diskpartition" ]] && diskpartition="-"
-            else
-                #if we are not using LVM, then its diskpartition already
-                diskpartition=$mount_source
+                disk=$(echo "$diskpartition" | sed -E 's|^/dev/||; s|(nvme[0-9]+n[0-9]+)p[0-9]+|\1|; s|([a-zA-Z]+)[0-9]+|\1|')
+
+                DpoFua_sg_modes=$(sg_modes "$diskpartition" 2>/dev/null | grep -oE 'DpoFua=[01]' | sed 's/.*=//')
+                [[ -z "${DpoFua_sg_modes:-}" ]] && DpoFua_sg_modes="-"
+
+                DpoFua_sys_block=$(cat /sys/block/$disk/queue/fua)
             fi
-
-            disk=$(echo "$diskpartition" | sed -E 's|^/dev/||; s|(nvme[0-9]+n[0-9]+)p[0-9]+|\1|; s|([a-zA-Z]+)[0-9]+|\1|')
-
-            DpoFua_sg_modes=$(sg_modes "$diskpartition" 2>/dev/null | grep -oE 'DpoFua=[01]' | sed 's/.*=//')
-            [[ -z "${DpoFua_sg_modes:-}" ]] && DpoFua_sg_modes="-"
-
-            DpoFua_sys_block=$(cat /sys/block/$disk/queue/fua)
         fi
 
         data+=("$db_name|$physical_name|$actual_path|$resolved|$FileSystem_type|$DpoFua_sg_modes|$DpoFua_sys_block|$diskpartition|$disk|$mount_point|$using_lvm")
@@ -171,3 +173,4 @@ printf "DpoFua(sg_modes)*: Indicates whether the device reports support for Forc
 printf "DpoFua(/sys/block/dev/queue/fua)**: Indicates whether the kernel driver has enabled Force Unit Access (FUA) on the device\n\n"
 printf "If you notice any discrepancies in FUA reporting between DpoFua(sg_modes) and DpoFua(/sys/block/dev/queue/fua), run \"dmesg | grep -i fua\" to check if FUA was disabled by kernel driver and why. If this is an Azure VM, verify whether read/write disk caching is enabled.\n\n"
 printf "Unresolved path indicates that the file does not exist or there is a case sensitivity mismatch between the actual physical file path and the Physical_name column value in sys.master_files. \n"
+printf "Empty fields indicate the script was run without elevated (sudo) permissions. \n"
