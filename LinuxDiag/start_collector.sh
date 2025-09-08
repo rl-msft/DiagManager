@@ -558,16 +558,19 @@ if command -v podman >/dev/null 2>&1 && podman ps >/dev/null 2>&1; then
 elif command -v docker >/dev/null 2>&1 && docker ps >/dev/null 2>&1; then
     checkContainerCommand="yes"
 fi
-`if [[ "$COLLECT_CONTAINER" == "YES" && "$checkContainerCommand" == "NO" ]]; then
+if [[ "$COLLECT_CONTAINER" == "YES" && "$checkContainerCommand" == "NO" ]]; then
 	COLLECT_CONTAINER="NO"
 fi
-##############################################################
 
+# Determine if we need to collect SQL data at all
 if [[ "$COLLECT_HOST_SQL_INSTANCE" == "NO" && "$COLLECT_CONTAINER" == "NO" ]] ; then
         COLLECT_SQL="NO"
 else
         COLLECT_SQL="YES"
 fi
+##############################################################
+
+
 
 echo -e "\x1B[2;34m========================================== Checking Prerequisites ==========================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 
