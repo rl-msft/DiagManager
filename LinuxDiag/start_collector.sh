@@ -375,13 +375,13 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 		CONFIG_FILE="./${scenario}"
 
 		#echo "Reading configuration values from config scenario file $CONFIG_FILE" 
-		echo "Reading configuration values from config scenario file $CONFIG_FILE" 
+		echo "Reading configuration values from config scenario file $CONFIG_FILE"  | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 		if [[ -f $CONFIG_FILE ]]; then
 			. $CONFIG_FILE
 			cp -f ./${scenario} ./pssdiag_collector.conf
 		else
  			echo "" 
-	 		echo "Error reading configuration file specified as input, make sure that $scenario exists" 
+	 		echo "Error reading configuration file specified as input, make sure that $scenario exists"  | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 			exit 1
 		fi
 	done 
@@ -514,13 +514,13 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 
 		CONFIG_FILE="./${scenario}"
 		#echo "Reading configuration values from config scenario file $CONFIG_FILE" 
-		echo "Reading configuration values from config scenario file $CONFIG_FILE" 
+		echo "Reading configuration values from config scenario file $CONFIG_FILE" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 		if [[ -f $CONFIG_FILE ]]; then
 			. $CONFIG_FILE
 			cp -f ./${scenario} ./pssdiag_collector.conf
 		else
  			echo "" 
-	 		echo "Error reading configuration file specified as input, make sure that $scenario exists" 
+	 		echo "Error reading configuration file specified as input, make sure that $scenario exists" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 			exit 1
 		fi
 	done 
@@ -560,6 +560,7 @@ elif command -v docker >/dev/null 2>&1 && docker ps >/dev/null 2>&1; then
 fi
 if [[ "$COLLECT_CONTAINER" != "NO" && "$checkContainerCommand" == "NO" ]] ; then
 	COLLECT_CONTAINER="NO"
+	sed -i 's/^COLLECT_CONTAINER=.*/COLLECT_CONTAINER=NO/' ./pssdiag_collector.conf
 fi
 
 # Determine if we need to collect SQL data at all

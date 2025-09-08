@@ -132,6 +132,11 @@ function capture_host_instance_service_mem_map_info()
 
 #Starting the script
 
+CONFIG_FILE="./pssdiag_collector.conf"
+if [[ -f $CONFIG_FILE ]]; then
+. $CONFIG_FILE
+fi
+
 if [[ -d "$1" ]] ; then
 	outputdir="$1"
 else

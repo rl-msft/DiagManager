@@ -190,7 +190,6 @@ if [[ -f $outputdir/pssdiag_stoppids_os_collectors.log ]]; then
 fi
 
 CONFIG_FILE="./pssdiag_collector.conf"
-# echo -e "$(date -u +"%T %D") Reading configuration values from Config file $CONFIG_FILE..." | tee -a $pssdiag_log
 if [[ -f $CONFIG_FILE ]]; then
 . $CONFIG_FILE
 fi
