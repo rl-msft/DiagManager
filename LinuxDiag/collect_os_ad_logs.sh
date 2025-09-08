@@ -79,7 +79,7 @@ else
     fi
     if [ -e "/etc/sssd/sssd.conf" ]; then
         echo -e "$(date -u +"%T %D") Collecting sssd.conf file information host instance : ${HOSTNAME}..." | tee -a $pssdiag_log
-        cat /etc/sssd/sssd.conf > $outputdir/${HOSTNAME}_os_sssd.conf
+        cat /etc/sssd/sssd.conf > $outputdir/${HOSTNAME}_os_sssd.conf 2>/dev/null || true
     fi
 
     #get krb5 logging file from krb5.conf, the format could be FILE: or FILE=

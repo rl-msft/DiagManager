@@ -172,28 +172,31 @@ infolog_filename=$outputdir/${HOSTNAME}_os_Disk_config.info
 echo -e "$(date -u +"%T %D") Collecting disk information..." | tee -a $pssdiag_log
 capture_disk_info
 
-#Capture sqlservr process info for continer instance
-#find the mapping between container sql child process and local sql child process, and get its information
-get_container_instance_status
-if [ "${is_container_runtime_service_active}" == "YES" ]; then
-    for pid in $(docker ps --no-trunc | grep -e '/opt/mssql/bin/sqlservr' | awk '{ print $1 }'); do 
-        #get container PID, this is going to be the parent local PID
-        local_container_sql_Parent_pid=$(docker inspect -f '{{.State.Pid}} {{.Name}}' $pid | tr -d '/' | awk '{print $1}')
-        dockername=$(docker inspect -f '{{.State.Pid}} {{.Name}}' $pid | tr -d '/' | awk '{print $2}')
-        container_sql_child_pid=$(pgrep -P $local_container_sql_Parent_pid | head -n 1)
-        echo -e "$(date -u +"%T %D") Collecting sqlservr process information for container instance : $dockername" | tee -a $pssdiag_log
-        infolog_filename=$outputdir/${dockername}_container_instance_${container_sql_child_pid}_process.info
-        capture_container_instance_process_info
-    done
+
+if [[ $COLLECT_CONTAINER == "YES" ]] ; then 
+    #Capture sqlservr process info for continer instance
+    #find the mapping between container sql child process and local sql child process, and get its information
+    get_container_instance_status
+    if [ "${is_container_runtime_service_active}" == "YES" ]; then
         for pid in $(docker ps --no-trunc | grep -e '/opt/mssql/bin/sqlservr' | awk '{ print $1 }'); do 
-        #get container PID, this is going to be the parent local PID
-        local_container_sql_Parent_pid=$(docker inspect -f '{{.State.Pid}} {{.Name}}' $pid | tr -d '/' | awk '{print $1}')
-        dockername=$(docker inspect -f '{{.State.Pid}} {{.Name}}' $pid | tr -d '/' | awk '{print $2}')
-        container_sql_child_pid=$(pgrep -P $local_container_sql_Parent_pid | head -n 1)
-        echo -e "$(date -u +"%T %D") Collecting sqlservr process memory map for container instance : $dockername" | tee -a $pssdiag_log
-        infolog_filename=$outputdir/${dockername}_container_instance_${container_sql_child_pid}_process_mem_map_info
-        capture_container_instance_process_mem_map_info
-    done
+            #get container PID, this is going to be the parent local PID
+            local_container_sql_Parent_pid=$(docker inspect -f '{{.State.Pid}} {{.Name}}' $pid | tr -d '/' | awk '{print $1}')
+            dockername=$(docker inspect -f '{{.State.Pid}} {{.Name}}' $pid | tr -d '/' | awk '{print $2}')
+            container_sql_child_pid=$(pgrep -P $local_container_sql_Parent_pid | head -n 1)
+            echo -e "$(date -u +"%T %D") Collecting sqlservr process information for container instance : $dockername" | tee -a $pssdiag_log
+            infolog_filename=$outputdir/${dockername}_container_instance_${container_sql_child_pid}_process.info
+            capture_container_instance_process_info
+        done
+            for pid in $(docker ps --no-trunc | grep -e '/opt/mssql/bin/sqlservr' | awk '{ print $1 }'); do 
+            #get container PID, this is going to be the parent local PID
+            local_container_sql_Parent_pid=$(docker inspect -f '{{.State.Pid}} {{.Name}}' $pid | tr -d '/' | awk '{print $1}')
+            dockername=$(docker inspect -f '{{.State.Pid}} {{.Name}}' $pid | tr -d '/' | awk '{print $2}')
+            container_sql_child_pid=$(pgrep -P $local_container_sql_Parent_pid | head -n 1)
+            echo -e "$(date -u +"%T %D") Collecting sqlservr process memory map for container instance : $dockername" | tee -a $pssdiag_log
+            infolog_filename=$outputdir/${dockername}_container_instance_${container_sql_child_pid}_process_mem_map_info
+            capture_container_instance_process_mem_map_info
+        done
+    fi
 fi
 
 #Capture sqlservr process info for host instance
@@ -221,12 +224,15 @@ echo "======System totals======" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top
 free -h >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
 echo "" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
 
-get_container_instance_status
-if [ "${is_container_runtime_service_active}" == "YES" ]; then
-    echo "======Containers instance======" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
-    docker stats --all --no-trunc --no-stream >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info   
-    echo "" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info 
+if [[ $COLLECT_CONTAINER == "YES" ]] ; then 
+    get_container_instance_status
+    if [ "${is_container_runtime_service_active}" == "YES" ]; then
+        echo "======Containers instance======" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info
+        docker stats --all --no-trunc --no-stream >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info   
+        echo "" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info 
+    fi
 fi
+
 get_host_instance_status
 if [ "${is_host_instance_service_active}" == "YES" ]; then
     echo "======host instance : mssql-server.service ======" >> $outputdir/${HOSTNAME}_os_systemd_cgroup_top.info

@@ -32,6 +32,10 @@ fi
 COLLECT_CONTAINER=${COLLECT_CONTAINER:-"NO"}
 COLLECT_HOST_SQL_INSTANCE=${COLLECT_HOST_SQL_INSTANCE:-"NO"}
 
+if [ $COLLECT_CONTAINER != "YES" ] ; then
+        exit 0
+fi
+
 echo -e "$(date -u +"%T %D") Starting containers log collection..." | tee -a $pssdiag_log
 
 

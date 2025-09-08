@@ -186,17 +186,23 @@ exec 2> >(tee -a $pssdiag_log >&2)
 
 # Checks: if we run with SUDO and not inside a container, and provide the warning.
 if [ -z "$SUDO_USER" ] && [ "$is_instance_inside_container_active" = "NO" ]; then
+	echo -e ""
 	echo -e "\e[31mWarning: PSSDiag was started without elevated (sudo) permissions.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-	echo -e "\e[31mElevated (sudo) permissions are required for PSSDiag to collect complete diagnostic data.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31mElevated (sudo) permissions are required for PSSDiag to collect complete diagnostic dataset.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "" | tee -a "$pssdiag_log"
 	echo -e "\e[31mWithout elevated permissions:\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "\e[31m** PSSDiag will not able to read mssql.conf to get SQL log file location and port number.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "\e[31m** PSSDiag will not able to copy errorlog, extended events and dump files..\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-	echo -e "\e[31m** OS log collector willmay fail.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31m** Some OS log collector may fail.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "\e[31m** All SQL container collectors will fail.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "\e[31m** Only T-SQL based collectors will be able run for SQL host instance with default port 1433.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "" | tee -a "$pssdiag_log"
-	read -p "Do you want to continue anyway? (y/n): " choice < /dev/tty 2> /dev/tty
+	echo -e "\e[31mIf you still prefer to run PSSDiag without elevated (sudo) permissions, please ensure the user executing PSSDiag has the following:.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31m** Ownership of PSSDiag folder.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31m** Read access to mssql.conf, as well as the SQL log and dump directories.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31m** Membership in the Docker group (or an equivalent group), if data is being collected from containers.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "" | tee -a "$pssdiag_log"
+	read -p "Do you want to continue? (y/n): " choice < /dev/tty 2> /dev/tty
 	case "$choice" in
 		y|Y ) ;;
 		n|N ) exit 1;;

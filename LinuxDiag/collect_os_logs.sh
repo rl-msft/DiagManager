@@ -23,7 +23,7 @@ fi
 #Check if I am running on host/systemd
 if (echo "$(readlink /sbin/init)" | grep systemd >/dev/null 2>&1); then
 	echo "$(date -u +"%T %D") Collecting dmesg log, journalctl, system logs..." | tee -a $pssdiag_log
-	dmesg > $outputdir/${HOSTNAME}_os_dmesg.info
+	dmesg > $outputdir/${HOSTNAME}_os_dmesg.info 2>/dev/null 
 	journalctl | tail -n1000 > $outputdir/${HOSTNAME}_os.journalctl.info
 	journalctl -u mssql-server > $outputdir/${HOSTNAME}_host_instance_journalctl.info
 	journalctl -u docker > $outputdir/${HOSTNAME}_os_docker.journalctl.info
