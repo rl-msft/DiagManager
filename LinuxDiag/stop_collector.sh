@@ -236,7 +236,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
                         sql_collect_linux_snapshot "${HOSTNAME}" "host_instance"
                   	sql_collect_perfstats_snapshot "${HOSTNAME}" "host_instance"
                         #chown only if pattern exists.
-                        stat -t -- "$output"/*.xel >/dev/null 2>&1 && [ "$(id -u)" -eq 0 ] && chown "$USER:" "$outputdir"/*.xel 
+                        stat -t -- $output/*.xel >/dev/null 2>&1 && chown $USER: $outputdir/*.xel  
                         # *.xel and *.trc files are placed in the output folder, nothing to collect here 
                         sql_collect_alwayson "${HOSTNAME}" "host_instance"
                         sql_collect_querystore "${HOSTNAME}" "host_instance"
@@ -265,7 +265,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
                         echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 
                         #chown only if pattern exists.
-                        stat -t -- "$output"/*.xel >/dev/null 2>&1 && [ "$(id -u)" -eq 0 ] && chown "$USER:" "$outputdir"/*.xel  
+                        stat -t -- $output/*.xel >/dev/null 2>&1 && chown $USER: $outputdir/*.xel  
                         # *.xel and *.trc files are placed in the output folder, nothing to collect here 
                         sql_collect_alwayson "${HOSTNAME}" "instance"
                         sql_collect_querystore "${HOSTNAME}" "instance"
