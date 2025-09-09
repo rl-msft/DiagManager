@@ -27,7 +27,7 @@ function capture_pcs_status_info()
 }
 
 #Starting the script
-echo -e "$(date -u +"%T %D") Starting os ha log collection..." | tee -a $pssdiag_log
+echo -e "$(date -u +"%T %D") Starting host HA log collection..." | tee -a $pssdiag_log
 
 #Execute only if pcs executable is installed
 if [ -f /usr/sbin/pcs ];then
@@ -52,6 +52,6 @@ if [ -f /usr/sbin/pcs ];then
 
 	sh -c 'tar -cjvf "$0/$3_os_pcs_cluster_logs_$1.tar.bz2" $2/pacemaker.log $2/cluster/* $2/pcsd/* --ignore-failed-read --absolute-names 2>/dev/null' "$outputdir" "$NOW" "$SYSLOGPATH" "$HOSTNAME"
 else
-	echo -e "$(date -u +"%T %D") looks pcs is not installed or not in a known path, skipping collecting ha os logs..."  | tee -a $pssdiag_log
+	echo -e "$(date -u +"%T %D") looks pcs is not installed or not in a known path, skipping collecting host HA logs..."  | tee -a $pssdiag_log
 fi
 

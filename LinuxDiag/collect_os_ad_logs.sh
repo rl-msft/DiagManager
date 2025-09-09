@@ -19,7 +19,7 @@ source ./pssdiag_support_functions.sh
 #}
 
 #Starting the script
-echo -e "$(date -u +"%T %D") Starting os ad logs collection..." | tee -a $pssdiag_log
+echo -e "$(date -u +"%T %D") Starting host AD logs collection..." | tee -a $pssdiag_log
 
 if [[ -d "$1" ]] ; then
 	outputdir="$1"
@@ -43,7 +43,7 @@ SYSLOGPATH=/var/log
 NOW=`date +"%m_%d_%Y"`
 
 if [ ! -e "/etc/krb5.conf" ]; then
-    echo -e "$(date -u +"%T %D") skipping collecting os ad logs there is no krb5.conf for host instance..." | tee -a $pssdiag_log
+    echo -e "$(date -u +"%T %D") skipping collecting host AD logs there is no krb5.conf for host instance..." | tee -a $pssdiag_log
 else
     linuxdistro=`cat /etc/os-release | grep -i '^ID=' | head -n1 | awk -F'=' '{print $2}' | sed 's/"//g'`
 

@@ -24,7 +24,7 @@ collect_docker_sql_ad_logs()
 dockerid=$1
 dockername=$2
 
-echo -e "$(date -u +"%T %D") Collecting ad logs from container instance $dockername..." | tee -a $pssdiag_log	
+echo -e "$(date -u +"%T %D") Collecting AD logs from container instance $dockername..." | tee -a $pssdiag_log	
 
 #Check if we have configuration files. default container deployment with no mounts do not have /var/opt/mssql/mssql.conf so we need to check this upfront. 
 docker_has_mssqlconf=$(docker exec --user root ${dockername} sh -c "(ls /var/opt/mssql/mssql.conf >> /dev/null 2>&1 && echo YES) || echo NO")
@@ -32,7 +32,7 @@ if [[ "${docker_has_mssqlconf}" == "YES" ]]; then
 SQL_SERVICE_KEYTAB_FILE=$(get_docker_conf_optionx '/var/opt/mssql/mssql.conf' 'network' 'kerberoskeytabfile' '' $dockername)
 docker_has_mssql_keytab=$(docker exec --user root ${dockername} sh -c "(ls ${SQL_SERVICE_KEYTAB_FILE} >> /dev/null 2>&1 && echo YES) || echo NO")
     if [[ "${docker_has_mssql_keytab}" == "NO" ]]; then
-        echo -e "$(date -u +"%T %D") skipping collecting ad logs, there is no mssql.keytab file for container instance $dockername..." | tee -a $pssdiag_log
+        echo -e "$(date -u +"%T %D") skipping collecting AD logs, there is no mssql.keytab file for container instance $dockername..." | tee -a $pssdiag_log
     else
         #Collect krb5.conf from container
         krb5file=$(docker container inspect -f '{{range .Mounts}}{{printf "\n"}}{{.Destination}}{{end}}' ${dockername} | grep -e krb5.conf)
@@ -70,7 +70,7 @@ docker_has_mssql_keytab=$(docker exec --user root ${dockername} sh -c "(ls ${SQL
 
         #check if krb5 logging was enabled at service level for container instance 
         SQL_CONTAINER_KRB5_TRACE=$(docker exec --user root ${dockername} env | grep "KRB5_TRACE" | grep KRB5_TRACE | sed -e "s/^KRB5_TRACE=//")
-        if [ -e "${SQL_CONTAINER_KRB5_TRACE}" ]; then
+        if docker exec --user root ${dockername} test -e "${SQL_CONTAINER_KRB5_TRACE}"; then
             echo -e "$(date -u +"%T %D") Collecting sql service krb5 trace from container instance : ${HOSTNAME}..." | tee -a $pssdiag_log
             docker cp $dockerid:$SQL_CONTAINER_KRB5_TRACE $outputdir/${dockername}_container_instance_$(basename ${SQL_CONTAINER_KRB5_TRACE}) | 2>/dev/null
         fi
@@ -79,7 +79,7 @@ fi
 }
 
 #Starting the script
-echo -e "$(date -u +"%T %D") Starting sql ad logs collection..." | tee -a $pssdiag_log
+echo -e "$(date -u +"%T %D") Starting sql AD logs collection..." | tee -a $pssdiag_log
 
 if [[ -d "$1" ]] ; then
 	outputdir="$1"
@@ -140,7 +140,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 	get_host_instance_status
 	#only check if its installed, if its installed then regradlesss if its active or note we need to collect the logs 
 	if [ "${is_host_instance_service_installed}" == "YES" ]; then
-		echo -e "$(date -u +"%T %D") Collecting ad logs from host instance ${HOSTNAME}..." | tee -a $pssdiag_log
+		echo -e "$(date -u +"%T %D") Collecting AD logs from host instance ${HOSTNAME}..." | tee -a $pssdiag_log
 
 		infolog_filename=$outputdir/${HOSTNAME}_host_intance_Kerberos.info
 
@@ -149,7 +149,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 			SQL_SERVICE_KEYTAB_FILE=$(get_conf_optionx '/var/opt/mssql/mssql.conf' 'network' 'kerberoskeytabfile' '')
 
 			if [ ! -e ${SQL_SERVICE_KEYTAB_FILE} ]; then
-				echo -e "$(date -u +"%T %D") skipping collecting ad logs, there is no mssql.keytab file for host instance : ${HOSTNAME}..." | tee -a $pssdiag_log
+				echo -e "$(date -u +"%T %D") skipping collecting AD logs, there is no mssql.keytab file for host instance : ${HOSTNAME}..." | tee -a $pssdiag_log
 			else
 				#Capture mssql.keytab klist information
 				echo -e "$(date -u +"%T %D") Collecting mssql.keytab klist information from host instance : ${HOSTNAME}..." | tee -a $pssdiag_log
@@ -182,7 +182,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 	#Collecting errorlog* system_health*.xel log*.trc
 	pssdiag_inside_container_get_instance_status
 	if [ "${is_instance_inside_container_active}" == "YES" ]; then
-		echo -e "$(date -u +"%T %D") collecting ad logs for instance ${HOSTNAME}..." | tee -a $pssdiag_log
+		echo -e "$(date -u +"%T %D") collecting AD logs for instance ${HOSTNAME}..." | tee -a $pssdiag_log
 		if [ ! -e "/var/opt/mssql/secrets/mssql.keytab" ]; then
 			#check if krb5 logging was enabled at service level for instance
 			SQL_INSTANCE_KRB5_TRACE=$(env | grep KRB5_TRACE | sed -e "s/^KRB5_TRACE=//")

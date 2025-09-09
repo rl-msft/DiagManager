@@ -193,7 +193,7 @@ if [ -z "$SUDO_USER" ] && [ "$is_instance_inside_container_active" = "NO" ]; the
 	echo -e "\e[31mWithout elevated permissions:\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "\e[31m** PSSDiag will not able to read mssql.conf to get SQL log file location and port number.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "\e[31m** PSSDiag will not able to copy errorlog, extended events and dump files..\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-	echo -e "\e[31m** Some OS log collector may fail.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+	echo -e "\e[31m** Some host OS log collector may fail.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "\e[31m** All SQL container collectors will fail.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "\e[31m** Only T-SQL based collectors will be able run for SQL host instance with default port 1433.\e[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 	echo -e "" | tee -a "$pssdiag_log"
@@ -296,21 +296,21 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 	echo -e "\x1B[2;34m============================================ Select Run Scenario ===========================================\x1B[0m" 
 	echo "Run Scenario's:"
 	echo ""
-	echo "Defines the level of data collection from OS and SQL whether they are host or container instance"
+	echo "Specify the level of data collection from Host OS and SQL instance, whether the SQL instance is running on the host or within a container"
 	echo ""
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
 	echo -e "|No |Run Scenario           |Description                                                                   |"
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
 	echo    "| 1 |static_collect.scn     |Passive data collection approach,focusing solely on copying standard logs from|"
-	echo -e "|   |                       |the OS and SQL without collecting any performance data. \x1B[34m(Default)\x1B[0m             |"
+	echo -e "|   |                       |host OS and SQL without collecting any performance data. \x1B[34m(Default)\x1B[0m            |"
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
 	echo    "| 2 |sql_perf_minimal.scn   |Collects minimal performance data from SQL without extended events            |"
 	echo    "|   |                       |suitable for extended use.                                                    |"
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
-	echo    "| 3 |sql_perf_light.scn     |Collects lightweight performance data from SQL and the operating system,      |"
+	echo    "| 3 |sql_perf_light.scn     |Collects lightweight performance data from SQL and host OS,                   |"
 	echo    "|   |                       |suitable for extended use.                                                    |"
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
-	echo    "| 4 |sql_perf_general.scn   |Collects general performance data from SQL and the OS, suitable for           |"
+	echo    "| 4 |sql_perf_general.scn   |Collects general performance data from SQL and host OS, suitable for          |"
 	echo    "|   |                       |15 to 20-minute collection periods, covering most scenarios.                  |"
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
 	echo    "| 5 |sql_perf_detailed.scn  |Collects detailed performance data at statement level, Avoid using this       |"
@@ -438,7 +438,7 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 	echo -e "\x1B[2;34m============================================ Select Run Scenario ===========================================\x1B[0m" 
 	echo "Run Scenario's:"
 	echo ""
-	echo "Defines the level of data collection from SQL instance"
+	echo "Specify the level of data collection from SQL"
 	echo ""
 	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
 	echo    "|No |Run Scenario              |Description                                                                |"
@@ -623,8 +623,8 @@ echo "$(date -u +"%T %D") Running inside WSL? ${is_host_instance_inside_wsl}" >>
 
 #Check OS build info
 echo "$(date -u +"%T %D") Running on an Azure VM? $([ "$(cat /sys/devices/virtual/dmi/id/chassis_asset_tag 2>/dev/null)" = "7783-7084-3265-9085-8269-3286-77" ] && echo "YES" || echo "NO")" >> $pssdiag_log
-echo "$(date -u +"%T %D") OS Distribution: $(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"') $(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')" >> $pssdiag_log
-echo "$(date -u +"%T %D") OS Kernel: $(uname -r)" >> $pssdiag_log
+echo "$(date -u +"%T %D") HOST Distribution: $(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"') $(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')" >> $pssdiag_log
+echo "$(date -u +"%T %D") HOST Kernel: $(uname -r)" >> $pssdiag_log
 echo "$(date -u +"%T %D") BASH_VERSION: ${BASH_VERSION}" >> $pssdiag_log
 
 echo -e "\x1B[2;34m============================================= Starting PSSDiag =============================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")

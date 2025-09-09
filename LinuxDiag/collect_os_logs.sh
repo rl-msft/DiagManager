@@ -4,7 +4,7 @@
 source ./pssdiag_support_functions.sh
 
 #Starting the script
-echo "$(date -u +"%T %D") Starting os logs collection..." | tee -a $pssdiag_log
+echo "$(date -u +"%T %D") Starting host OS logs collection..." | tee -a $pssdiag_log
 
 #collect SQL errorlogs
 SYSLOGPATH=/var/log

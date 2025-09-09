@@ -181,7 +181,7 @@ if [[ -f $outputdir/pssdiag_stoppids_sql_collectors.log ]]; then
 	#rm -f $outputdir/pssdiag_stoppids_sql_collectors.log 2> /dev/null
 fi
 if [[ -f $outputdir/pssdiag_stoppids_os_collectors.log ]]; then
-	echo "$(date -u +"%T %D") Starting to stop background processes that were collecting os data..." | tee -a $pssdiag_log
+	echo "$(date -u +"%T %D") Starting to stop background processes that were collecting host data..." | tee -a $pssdiag_log
 	#cat $outputdir/pssdiag_stoppids_os_collectors.log
 	kill -9 `cat $outputdir/pssdiag_stoppids_os_collectors.log` 2> /dev/null
         killedlist=$(awk '{ for (i=1; i<=NF; i++) RtoC[i]= (RtoC[i]? RtoC[i] FS $i: $i) } END{ for (i in RtoC) print RtoC[i] }' $outputdir/pssdiag_stoppids_os_collectors.log)
