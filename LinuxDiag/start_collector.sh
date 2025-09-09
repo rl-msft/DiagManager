@@ -549,13 +549,10 @@ if [[ ${authentication_mode} == "SQL" ]] || [[ ${authentication_mode} == "AD" ]]
 	SQL_CONNECT_AUTH_MODE=${authentication_mode:-"SQL"}
 fi
 
-#Check the ability to run container commands, if we cant then set COLLECT_CONTAINER to NO regardless of scenario setting.
+#by default we collect containers logs, many times there are no conatiners, it would be better to skip the logic for collect from containers
+#Here we are checking if we have SQL container running on the host, if not we set COLLECT_CONTAINER to NO regardless of what is set in the config file, scn file.
 checkContainerCommand="NO"
-# Check if podman is installed and can run podman ps
-if command -v podman >/dev/null 2>&1 && podman ps >/dev/null 2>&1; then
-    checkContainerCommand="yes"
-# Check if docker is installed and can run docker ps
-elif command -v docker >/dev/null 2>&1 && docker ps >/dev/null 2>&1; then
+if docker ps --no-trunc | grep -e '/opt/mssql/bin/sqlservr' | awk '{ print $1 }' 2>&1; then
     checkContainerCommand="yes"
 fi
 if [[ "$COLLECT_CONTAINER" != "NO" && "$checkContainerCommand" == "NO" ]] ; then
