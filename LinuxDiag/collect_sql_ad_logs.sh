@@ -52,9 +52,10 @@ docker_has_mssql_keytab=$(docker exec --user root ${dockername} sh -c "(ls ${SQL
 
         #Collecting mssql.keytab klist information
         echo "$(date -u +"%T %D") Collecting mssql.keytab klist information from container instance $dockername..."
-        tmpcontainertmpfile="./$(uuidgen).pssdiag.mssql.keytab"
+        tmpcontainertmpfile="$outputdir/$(uuidgen).pssdiag.container.temp"
         docker cp $dockerid:${SQL_SERVICE_KEYTAB_FILE} ${tmpcontainertmpfile} | 2>/dev/null
         capture_system_info_command "klist -kte ${tmpcontainertmpfile}" "klist -kte ${SQL_SERVICE_KEYTAB_FILE}"
+		chmod u+w "$tmpcontainertmpfile"
         rm "$tmpcontainertmpfile"
 
         #Collecting service account kvno information     
