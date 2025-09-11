@@ -551,8 +551,9 @@ fi
 
 #by default we collect containers logs, many times there are no conatiners, it would be better to skip the logic for collect from containers
 #Here we are checking if we have SQL container running on the host, if not we set COLLECT_CONTAINER to NO regardless of what is set in the config file, scn file.
+COLLECT_CONTAINER="${COLLECT_CONTAINER^^}"
 checkContainerCommand="NO"
-if docker ps --no-trunc | grep -e '/opt/mssql/bin/sqlservr' | awk '{ print $1 }' > /dev/null 2>&1; then
+if docker ps --no-trunc | grep -q '/opt/mssql/bin/sqlservr'; then
     checkContainerCommand="yes"
 fi
 if [[ "$COLLECT_CONTAINER" != "NO" && "$checkContainerCommand" == "NO" ]] ; then
