@@ -88,6 +88,12 @@ sql_collect_databases_disk_map()
         ./collect_sql_database_disk_map.sh "$SQL_SERVER_NAME" "$CONN_AUTH_OPTIONS" >> $outputdir/${1}_${2}_SQL_Databases_Disk_Map_Shutdown.out
 }
 
+sql_collect_known_issues_analyzer()
+{
+        echo -e "$(date -u +"%T %D") Collecting SQL database known issues information..." | tee -a $pssdiag_log
+        ./sql_linux_known_issues_analyzer.sh "$SQL_SERVER_NAME" "$CONN_AUTH_OPTIONS" >> $outputdir/${1}_${2}_SQL_Linux_Known_Issues_Analyzer.out
+}
+
 sql_collect_top_plans_CPU()
 {
         echo -e "$(date -u +"%T %D") Collecting TOP Plan by CPU..." | tee -a $pssdiag_log
@@ -211,43 +217,66 @@ if [[ ${authentication_mode} == "SQL" ]] || [[ ${authentication_mode} == "AD" ]]
 	SQL_CONNECT_AUTH_MODE=${authentication_mode:-"SQL"}
 fi
 
-#this section will connect to sql server instances and collect sql script outputs
-#host instance
+######################################################################################
+# TSQL based collectors                                                              #
+# - this section will connect to sql server instances and collect sql script outputs #
+######################################################################################
+
+# ────────────────────────────
+# - Collect "host_instance"                   
+# - SQL running on VM                
+# - PSSDiag is running on host       
+# ────────────────────────────
+
 if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
         #we collect information from base host instance of SQL Server
         get_host_instance_status
 	if [ "${is_host_instance_service_active}" == "YES" ]; then
                 SQL_LISTEN_PORT=$(get_sql_listen_port "host_instance")
                 SQL_SERVER_NAME="$HOSTNAME,$SQL_LISTEN_PORT"
-                echo -e "\x1B[7m$(date -u +"%T %D") Collecting information from host instance $HOSTNAME and port $SQL_LISTEN_PORT...\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-                sql_connect "host_instance" "${HOSTNAME}" "${SQL_LISTEN_PORT}" "${authentication_mode}"
-                sqlconnect=$?
-                if [[ $sqlconnect -ne 1 ]]; then
-        	        echo -e "\x1B[31mTesting the connection to host instance using $authentication_mode authentication failed." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-			echo -e "Please refer to the above lines for errors...\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+
+                #check if port is open, before we try to connect. If not, skip trying to connect.
+                #this telnet check if only for host_instance scenario.
+                timeout 15 bash -c "echo > /dev/tcp/$HOSTNAME/$SQL_LISTEN_PORT" 2>/dev/null
+
+                #if no errors, go ahead and try to connect            
+                if [ $? -eq 0 ]; then
+                        echo -e "\x1B[7m$(date -u +"%T %D") Collecting information from host instance $HOSTNAME and port $SQL_LISTEN_PORT...\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+                        sql_connect "host_instance" "${HOSTNAME}" "${SQL_LISTEN_PORT}" "${authentication_mode}"
+                        sqlconnect=$?
+                        if [[ $sqlconnect -ne 1 ]]; then
+                                echo -e "\x1B[31mTesting the connection to host instance using $authentication_mode authentication failed." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+                                echo -e "Please refer to the above lines for errors...\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+                        else
+                                sql_stop_xevent "${HOSTNAME}" "host_instance" 
+                                sql_stop_trace "${HOSTNAME}" "host_instance" 
+
+                                echo -e "\x1B[2;34m======================================== Collecting TSQL Based Collector ============================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+
+                                sql_collect_config "${HOSTNAME}" "host_instance"
+                                sql_collect_top_plans_CPU "${HOSTNAME}" "host_instance"
+                                sql_collect_linux_snapshot "${HOSTNAME}" "host_instance"
+                                sql_collect_perfstats_snapshot "${HOSTNAME}" "host_instance"
+                                #chown only if pattern exists.
+                                stat -t -- $output/*.xel >/dev/null 2>&1 && chown $USER: $outputdir/*.xel  
+                                # *.xel and *.trc files are placed in the output folder, nothing to collect here 
+                                sql_collect_alwayson "${HOSTNAME}" "host_instance"
+                                sql_collect_querystore "${HOSTNAME}" "host_instance"
+                                sql_collect_databases_disk_map "${HOSTNAME}" "host_instance" #this is only for host_instance scenario 
+                                sql_collect_known_issues_analyzer "${HOSTNAME}" "host_instance"
+                        fi
                 else
-                        sql_stop_xevent "${HOSTNAME}" "host_instance" 
-                        sql_stop_trace "${HOSTNAME}" "host_instance" 
-
-                        echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
-
-                        sql_collect_config "${HOSTNAME}" "host_instance"
-                        sql_collect_top_plans_CPU "${HOSTNAME}" "host_instance"
-                        sql_collect_linux_snapshot "${HOSTNAME}" "host_instance"
-                  	sql_collect_perfstats_snapshot "${HOSTNAME}" "host_instance"
-                        #chown only if pattern exists.
-                        stat -t -- $output/*.xel >/dev/null 2>&1 && chown $USER: $outputdir/*.xel  
-                        # *.xel and *.trc files are placed in the output folder, nothing to collect here 
-                        sql_collect_alwayson "${HOSTNAME}" "host_instance"
-                        sql_collect_querystore "${HOSTNAME}" "host_instance"
-                        sql_collect_databases_disk_map "${HOSTNAME}" "host_instance"
+                        echo -e "there is no SQL instance listening on port $SQL_LISTEN_PORT, skipping TSQL based collectors..." | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
                 fi
         fi
-
 fi
 
-#this section will connect to sql server instances and collect sql script outputs
-#Collect informaiton if we are running inside container
+# ──────────────────────────────────────
+# - Collect "instance"                   
+# - SQL running inside container
+# - PSSDiag is running inside container       
+# ──────────────────────────────────────
+
 if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 	pssdiag_inside_container_get_instance_status
 	if [ "${is_instance_inside_container_active}" == "YES" ]; then
@@ -262,7 +291,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
                         sql_stop_xevent "${HOSTNAME}" "instance" 
                         sql_stop_trace "${HOSTNAME}" "instance" 
 
-                        echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+                        echo -e "\x1B[2;34m================================== Collecting TSQL Based Collector =========================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 
                         #chown only if pattern exists.
                         stat -t -- $output/*.xel >/dev/null 2>&1 && chown $USER: $outputdir/*.xel  
@@ -273,10 +302,17 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
                         sql_collect_top_plans_CPU "${HOSTNAME}" "instance"
                         sql_collect_linux_snapshot "${HOSTNAME}" "instance"
                         sql_collect_perfstats_snapshot "${HOSTNAME}" "instance"
+                        sql_collect_known_issues_analyzer "${HOSTNAME}" "instance"
                 fi
         fi  
 fi
 
+
+# ──────────────────────────────────────
+# - Collect "container_instance"                   
+# - SQL running as docker container
+# - PSSDiag is running on VM       
+# ──────────────────────────────────────
 
 if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
 # we need to collect logs from containers
@@ -299,7 +335,7 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                 sql_stop_xevent "${dockername}" "container_instance"
                                 sql_stop_trace "${dockername}" "container_instance"
 
-                                echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+                                echo -e "\x1B[2;34m================================== Collecting TSQL Based Collector =========================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 
                                 sql_collect_xevent "${dockerid}" "${dockername}" "container_instance"
                                 sql_collect_trace "${dockerid}" "${dockername}" "container_instance"
@@ -309,6 +345,7 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                 sql_collect_top_plans_CPU "${dockername}" "container_instance"
                                 sql_collect_linux_snapshot "${dockername}" "container_instance"
                                 sql_collect_perfstats_snapshot "${dockername}" "container_instance"
+                                sql_collect_known_issues_analyzer "${dockername}" "container_instance" 
                         fi
                 # we finished processing the requested container
                 else
@@ -331,7 +368,7 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                         sql_stop_xevent "${dockername}" "container_instance"
                                         sql_stop_trace "${dockername}" "container_instance"
 
-                                        echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+                                        echo -e "\x1B[2;34m================================== Collecting TSQL Based Collector =========================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 
                                         sql_collect_xevent "${dockerid}" "${dockername}" "container_instance"
                                         sql_collect_trace "${dockerid}" "${dockername}" "container_instance"
@@ -341,12 +378,21 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
                                         sql_collect_top_plans_CPU "${dockername}" "container_instance"
                                         sql_collect_linux_snapshot "${dockername}" "container_instance"
                                         sql_collect_perfstats_snapshot "${dockername}" "container_instance"
+                                        sql_collect_known_issues_analyzer "${dockername}" "container_instance"
                                 fi
                         done;
                 # we finished processing all the container
                 fi
         fi
 fi
+
+######################################################################################
+# bash script collectors                                                             #
+# - this section will use sh script to collect logs and configuration                #
+######################################################################################
+
+echo -e "\x1B[2;34m======================================== Collecting Static Logs ============================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+
 
 #collect basic machine configuration
 if [[ $COLLECT_OS_CONFIG == "YES" ]]; then
@@ -386,9 +432,6 @@ fi
 if [[ "$COLLECT_SQL_BEST_PRACTICES" == "YES" ]]; then
 	echo -e "$(date -u +"%T %D") Collecting SQL Linux Best Practices Analyzer..." | tee -a $pssdiag_log
         ./sql_linux_best_practices_analyzer.sh --explain-all >> $outputdir/${HOSTNAME}_host_instance_SQL_Linux_Best_Practice_Analyzer.out
-
-        echo -e "$(date -u +"%T %D") Collecting SQL Linux Known issues Analyzer..." | tee -a $pssdiag_log
-        ./sql_linux_known_issues_analyzer.sh "$SQL_SERVER_NAME" "$CONN_AUTH_OPTIONS" >> $outputdir/${HOSTNAME}_host_instance_SQL_Linux_Known_Issues_Analyzer.out
 fi
 
 if [ "$EUID" -ne 0 ]; then

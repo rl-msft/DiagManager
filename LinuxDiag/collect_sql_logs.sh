@@ -6,86 +6,88 @@ source ./pssdiag_support_functions.sh
 collect_docker_sql_logs()
 {
 
-dockerid=$1
-dockername=$2
+	dockerid=$1
+	dockername=$2
 
+	#Check if we have configuration files. default container deployment with no mounts do not have /var/opt/mssql/mssql.conf so we need to check this upfront. 
+	docker_has_mssqlconf=$(docker exec --user root ${dockername} sh -c "(ls /var/opt/mssql/mssql.conf >> /dev/null 2>&1 && echo YES) || echo NO")
 
-#Collectin errorlog* system_health*.xel log*.trc
-
-#Check if we have configuration files. default container deployment with no mounts do not have /var/opt/mssql/mssql.conf so we need to check this upfront. 
-docker_has_mssqlconf=$(docker exec --user root ${dockername} sh -c "(ls /var/opt/mssql/mssql.conf >> /dev/null 2>&1 && echo YES) || echo NO")
-
-#Collecting errorlog
-echo -e "$(date -u +"%T %D") Collecting errorlog system_health alwayson_health trc logs : $dockername..." | tee -a $pssdiag_log
-if [[ "${docker_has_mssqlconf}" == "YES" ]]; then
-	SQL_ERRORLOG=$(get_docker_conf_optionx '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog' $dockername)
-	SQL_LOG_DIR=$(dirname $SQL_ERRORLOG)
-else
-	SQL_ERRORLOG="/var/opt/mssql/log/errorlog"
-	SQL_LOG_DIR=$(dirname $SQL_ERRORLOG)
-fi
-
-
-if hash bzip2 2>/dev/null; then
-	docker exec $dockerid sh -c "cd ${SQL_LOG_DIR} && tar -cf - errorlog* *_health*.xel HkEngineEventFile*.xel log*.trc" | bzip2 > $outputdir/${dockername}_container_instance_sql_logs.bz2
-else
-	docker exec $dockerid sh -c "cd ${SQL_LOG_DIR} && tar -cf - errorlog* *_health*.xel HkEngineEventFile*.xel log*.trc" | $outputdir/${dockername}_container_instance_sql_logs.tar
-fi
-
-#Collecting sqlagents logs
-echo -e "$(date -u +"%T %D") Collecting sqlagent logs from container : $dockername..." | tee -a $pssdiag_log
-
-if [[ "${docker_has_mssqlconf}" == "YES" ]]; then
-	SQL_AGENTLOG=$(get_docker_conf_optionx '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent' $dockername)
-	SQL_AGENTLOG_DIR=$(dirname $SQL_AGENTLOG)
-else
-	SQL_AGENTLOG="/var/opt/mssql/log/sqlagent"
-	SQL_AGENTLOG_DIR=$(dirname $SQL_AGENTLOG)
-fi
-if hash bzip2 2>/dev/null; then
-	docker exec $dockerid sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | bzip2 > $outputdir/${dockername}_container_instance_sqlagent_logs.bz2
-	# Collecting sqlagentstartup.log, which is always at /var/opt/mssql/log regardless of filelocation in mssql.conf
-	docker exec $dockerid sh -c "cd /var/opt/mssql/log/ && tar -cf - sqlagentstartup.log" | bzip2 >> $outputdir/${dockername}_container_instance_sqlagent_logs.bz2
-else
-	docker exec $dockerid sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | cat > $outputdir/${dockername}_container_instance_sqlagent_logs.tar
-	# Collecting sqlagentstartup.log, which is always at /var/opt/mssql/log regardless of filelocation in mssql.conf
-	docker exec $dockerid sh -c "cd /var/opt/mssql/log/ && tar -cf - sqlagentstartup.log" | cat >> $outputdir/${dockername}_container_instance_sqlagent_logs.tar
-fi
-
-##Collecting pal logs form container instance
-docker_has_loggerini=$(docker exec --user root ${dockername} sh -c "(ls /var/opt/mssql/logger.ini >> /dev/null 2>&1 && echo YES) || echo NO")
-
-if [[ "${docker_has_loggerini}" == "YES" ]]; then
-	echo -e "$(date -u +"%T %D") Collecting pal logs from container : $dockername..." | tee -a $pssdiag_log
-	result=$(get_docker_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA' $dockername)
-	if [ "$result" = "NA" ]; then
-		result=$(get_docker_conf_optionx '/var/opt/mssql/logger.ini' 'Output.sql' 'filename' 'NA' $dockername)
-	fi
-	if [ "${result}" != "NA" ]; then
-		PAL_LOG="${result}"
-		PAL_LOG_DIR=$(dirname $PAL_LOG)
-		PAL_LOG=$(basename $PAL_LOG)
-
-		if hash bzip2 2>/dev/null; then
-			docker exec $dockerid sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | bzip2 > $outputdir/${dockername}_container_instance_pal_logs.bz2
-		else
-			docker exec $dockerid sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | $outputdir/${dockername}_container_instance_pal_logs.tar
-		fi
+	#Collecting errorlog
+	echo -e "$(date -u +"%T %D") Collecting errorlog system_health alwayson_health trc logs : $dockername..." | tee -a $pssdiag_log
+	if [[ "${docker_has_mssqlconf}" == "YES" ]]; then
+		SQL_ERRORLOG=$(get_docker_conf_optionx '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog' $dockername)
+		SQL_LOG_DIR=$(dirname $SQL_ERRORLOG)
 	else
-		echo -e "$(date -u +"%T %D") logger.ini maybe malformed, skipping pal log collection for container : ${dockername}... " | tee -a $pssdiag_log
+		SQL_ERRORLOG="/var/opt/mssql/log/errorlog"
+		SQL_LOG_DIR=$(dirname $SQL_ERRORLOG)
 	fi
-fi
 
-#Collect mssql.conf, this one we need to echo out before collection as info about this container
-echo -e "$(date -u +"%T %D") Collecting mssql.conf from container instance : $dockername..." | tee -a $pssdiag_log
-if [[ "${docker_has_mssqlconf}" == "YES" ]]; then
-	docker cp $dockerid:/var/opt/mssql/mssql.conf $outputdir/${dockername}_container_instance_mssql.conf | 2>/dev/null
-else
-	echo -e "$(date -u +"%T %D") Container ${dockername} has no mssql.conf file..." | tee -a $pssdiag_log
-fi
+
+	if hash bzip2 2>/dev/null; then
+		docker exec $dockerid sh -c "cd ${SQL_LOG_DIR} && tar -cf - errorlog* *_health*.xel HkEngineEventFile*.xel log*.trc" | bzip2 > $outputdir/${dockername}_container_instance_sql_logs.bz2
+	else
+		docker exec $dockerid sh -c "cd ${SQL_LOG_DIR} && tar -cf - errorlog* *_health*.xel HkEngineEventFile*.xel log*.trc" | $outputdir/${dockername}_container_instance_sql_logs.tar
+	fi
+
+	#Collecting sqlagents logs
+	echo -e "$(date -u +"%T %D") Collecting sqlagent logs from container : $dockername..." | tee -a $pssdiag_log
+
+	if [[ "${docker_has_mssqlconf}" == "YES" ]]; then
+		SQL_AGENTLOG=$(get_docker_conf_optionx '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent' $dockername)
+		SQL_AGENTLOG_DIR=$(dirname $SQL_AGENTLOG)
+	else
+		SQL_AGENTLOG="/var/opt/mssql/log/sqlagent"
+		SQL_AGENTLOG_DIR=$(dirname $SQL_AGENTLOG)
+	fi
+	if hash bzip2 2>/dev/null; then
+		docker exec $dockerid sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | bzip2 > $outputdir/${dockername}_container_instance_sqlagent_logs.bz2
+		# Collecting sqlagentstartup.log, which is always at /var/opt/mssql/log regardless of filelocation in mssql.conf
+		docker exec $dockerid sh -c "cd /var/opt/mssql/log/ && tar -cf - sqlagentstartup.log" | bzip2 >> $outputdir/${dockername}_container_instance_sqlagent_logs.bz2
+	else
+		docker exec $dockerid sh -c "cd ${SQL_AGENTLOG_DIR} && tar -cf - sqlagent*" | cat > $outputdir/${dockername}_container_instance_sqlagent_logs.tar
+		# Collecting sqlagentstartup.log, which is always at /var/opt/mssql/log regardless of filelocation in mssql.conf
+		docker exec $dockerid sh -c "cd /var/opt/mssql/log/ && tar -cf - sqlagentstartup.log" | cat >> $outputdir/${dockername}_container_instance_sqlagent_logs.tar
+	fi
+
+	##Collecting pal logs form container instance
+	docker_has_loggerini=$(docker exec --user root ${dockername} sh -c "(ls /var/opt/mssql/logger.ini >> /dev/null 2>&1 && echo YES) || echo NO")
+
+	if [[ "${docker_has_loggerini}" == "YES" ]]; then
+		echo -e "$(date -u +"%T %D") Collecting pal logs from container : $dockername..." | tee -a $pssdiag_log
+		result=$(get_docker_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA' $dockername)
+		if [ "$result" = "NA" ]; then
+			result=$(get_docker_conf_optionx '/var/opt/mssql/logger.ini' 'Output.sql' 'filename' 'NA' $dockername)
+		fi
+		if [ "${result}" != "NA" ]; then
+			PAL_LOG="${result}"
+			PAL_LOG_DIR=$(dirname $PAL_LOG)
+			PAL_LOG=$(basename $PAL_LOG)
+
+			if hash bzip2 2>/dev/null; then
+				docker exec $dockerid sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | bzip2 > $outputdir/${dockername}_container_instance_pal_logs.bz2
+			else
+				docker exec $dockerid sh -c "cd ${PAL_LOG_DIR} && tar -cf - ${PAL_LOG}*" | $outputdir/${dockername}_container_instance_pal_logs.tar
+			fi
+		else
+			echo -e "$(date -u +"%T %D") logger.ini maybe malformed, skipping pal log collection for container : ${dockername}... " | tee -a $pssdiag_log
+		fi
+	fi
+
+	#Collect mssql.conf, this one we need to echo out before collection as info about this container
+	echo -e "$(date -u +"%T %D") Collecting mssql.conf from container instance : $dockername..." | tee -a $pssdiag_log
+	if [[ "${docker_has_mssqlconf}" == "YES" ]]; then
+		docker cp $dockerid:/var/opt/mssql/mssql.conf $outputdir/${dockername}_container_instance_mssql.conf | 2>/dev/null
+	else
+		echo -e "$(date -u +"%T %D") Container ${dockername} has no mssql.conf file..." | tee -a $pssdiag_log
+	fi
+
+	
 }
 
-#Script is starting
+######################
+# Script is starting #
+######################
+
 echo -e "$(date -u +"%T %D") Starting sql logs collection..." | tee -a $pssdiag_log
 
 NOW=`date +"%m_%d_%Y"`					  
