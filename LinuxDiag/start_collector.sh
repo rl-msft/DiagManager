@@ -93,7 +93,7 @@ sql_collect_trace()
 		"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"MSDiagProcs.sql" -o"$outputdir/${1}_${2}_MSDiagprocs.out"
                 echo -e "$(date -u +"%T %D") Starting SQL trace collection...  " | tee -a $pssdiag_log
                 cp -f ./${SQL_TRACE_TEMPLATE}.template ./pssdiag_trace_start.sql
-		if [[ "$2" == "host_instance" ]]; then
+		if [[ "$2" == "host_instance" ]] || [[ "$2" == "instance" ]]; then
 			sed -i "s|##TraceFileName##|${outputdir}/${1}_${2}_pssdiag_trace|" pssdiag_trace_start.sql
 		else
 			sed -i "s|##TraceFileName##|/var/opt/mssql/log/${1}_${2}_pssdiag_trace|" pssdiag_trace_start.sql
@@ -553,7 +553,7 @@ fi
 #Here we are checking if we have SQL container running on the host, if not we set COLLECT_CONTAINER to NO regardless of what is set in the config file, scn file.
 COLLECT_CONTAINER="${COLLECT_CONTAINER^^}"
 checkContainerCommand="NO"
-if docker ps --no-trunc | grep -q '/opt/mssql/bin/sqlservr'; then
+if docker ps --no-trunc 2>/dev/null | grep -q '/opt/mssql/bin/sqlservr'; then
     checkContainerCommand="yes"
 fi
 if [[ "$COLLECT_CONTAINER" != "NO" && "$checkContainerCommand" == "NO" ]] ; then
@@ -665,8 +665,18 @@ if [[ $COLLECT_OS_COUNTERS == [Yy][eE][sS] ]] ; then
         date +%z > $outputdir/${HOSTNAME}_os_timezone.info &
 fi
 
-#this section will connect to sql server instances and collect sql script outputs
-#host instance
+######################################################################################
+# TSQL based collectors                                                              #
+# - this section will connect to sql server instances and collect sql script outputs #
+######################################################################################
+
+# ────────────────────────────
+# - Collect "host_instance"                   
+# - SQL running on VM                
+# - PSSDiag is running on host       
+# ────────────────────────────
+
+
 if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 	#we collect information from base host instance of SQL Server
 	get_host_instance_status
@@ -694,8 +704,12 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 	fi
 fi
 
-#this section will connect to sql server instances and collect sql script outputs
-#Collect informaiton if we are running inside container
+# ──────────────────────────────────────
+# - Collect "instance"                   
+# - SQL running inside container
+# - PSSDiag is running inside container       
+# ──────────────────────────────────────
+
 if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 	pssdiag_inside_container_get_instance_status
 	if [ "${is_instance_inside_container_active}" == "YES" ]; then
@@ -721,6 +735,12 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 	fi
 
 fi
+
+# ──────────────────────────────────────
+# - Collect "container_instance"                   
+# - SQL running as docker container
+# - PSSDiag is running on VM       
+# ──────────────────────────────────────
 
 if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
 # we need to collect logs from containers
