@@ -231,7 +231,7 @@ fi
 if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
         #we collect information from base host instance of SQL Server
         get_host_instance_status
-	if [ "${is_host_instance_service_active}" == "YES" ]; then
+	if [ "${is_host_instance_process_running}" == "YES" ]; then
                 SQL_LISTEN_PORT=$(get_sql_listen_port "host_instance")
                 SQL_SERVER_NAME="$HOSTNAME,$SQL_LISTEN_PORT"
 

@@ -610,6 +610,7 @@ echo "$(date -u +"%T %D") Output Directory: ${outputdir}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Host instance service installed? ${is_host_instance_service_installed}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Host instance service enabled? ${is_host_instance_service_enabled}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Host instance service active? ${is_host_instance_service_active}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Host instance process running? ${is_host_instance_process_running}" >> $pssdiag_log
 #get_container_instance_status
 echo "$(date -u +"%T %D") Docker installed? ${is_container_runtime_service_installed}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Docker service enabled? ${is_container_runtime_service_enabled}" >> $pssdiag_log
@@ -680,7 +681,7 @@ fi
 if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 	#we collect information from base host instance of SQL Server
 	get_host_instance_status
-	if [ "${is_host_instance_service_active}" == "YES" ]; then
+	if [ "${is_host_instance_process_running}" == "YES" ]; then
 		SQL_LISTEN_PORT=$(get_sql_listen_port "host_instance")
 		#SQL_SERVER_NAME="$HOSTNAME,$SQL_LISTEN_PORT"
 		#echo -e "" | tee -a $pssdiag_log

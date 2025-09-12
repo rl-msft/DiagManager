@@ -83,31 +83,33 @@ get_docker_mapped_port()
 }
 
 #Checking host instance status
-get_host_instance_status()
+get_host_instance_status() 
 {
-	is_host_instance_service_installed="NO"
-	is_host_instance_service_enabled="NO"
-	is_host_instance_service_active="NO"
+    is_host_instance_service_installed="NO"
+    is_host_instance_service_enabled="NO"
+    is_host_instance_service_active="NO"
+    is_host_instance_process_running="NO"
 
-	#Check if we are at host/systemd
-	if (echo "$(readlink /sbin/init)" | grep systemd >/dev/null 2>&1); then
-		if [ "$(systemctl list-units -all | grep mssql-server.service 2>/dev/null)" ]; then
-			is_host_instance_service_installed="YES"
-			if (systemctl -q is-enabled mssql-server); then
-				is_host_instance_service_enabled="YES"
-			else
-				is_host_instance_service_enabled="NO"
+    # Check if system uses systemd
+    if [[ "$(readlink /sbin/init)" == *systemd* ]]; then
+        if systemctl list-units --all | grep -q mssql-server.service; then
+            is_host_instance_service_installed="YES"
+
+            if systemctl -q is-enabled mssql-server; then
+                is_host_instance_service_enabled="YES"
+            fi
+
+            if systemctl -q is-active mssql-server; then
+                is_host_instance_service_active="YES"
+            fi
+
+			if pgrep -f "/opt/mssql/bin/sqlservr" >/dev/null 2>&1; then
+				is_host_instance_process_running="YES"
 			fi
-			if (systemctl -q is-active mssql-server); then
-				is_host_instance_service_active="YES"
-			else
-				is_host_instance_service_active="NO"
-			fi
-		else
-			is_host_instance_service_installed="NO"
-		fi
-	fi
+        fi
+    fi
 }
+
 
 #Checking containers status, including podman
 get_container_instance_status()
@@ -116,34 +118,28 @@ get_container_instance_status()
 	is_container_runtime_service_enabled="NO"
 	is_container_runtime_service_active="NO"
 
+  # Check if system uses systemd
+    if [[ "$(readlink /sbin/init)" == *systemd* ]]; then
+        if systemctl list-units --type=service --state=active | grep -q docker; then
+            is_container_runtime_service_installed="YES"
 
-	#Check first if we are at host/systemd
-	if (echo "$(readlink /sbin/init)" | grep systemd >/dev/null 2>&1); then
-		if [ "$(systemctl list-units --type=service --state=active | grep docker 2>/dev/null)" ]; then
-			is_container_runtime_service_installed="YES"
-			if (systemctl -q is-enabled docker); then
-				is_container_runtime_service_enabled="YES"
-			else
-				is_container_runtime_service_enabled="NO"
-			fi
-			if (systemctl -q is-active docker); then
-				is_container_runtime_service_active="YES"
-			else
-				is_container_runtime_service_active="NO"
-			fi
-		else
-			is_container_runtime_service_installed="NO"
-		fi
-	fi
+            if systemctl -q is-enabled docker &>/dev/null; then
+                is_container_runtime_service_enabled="YES"
+            fi
+
+            if systemctl -q is-active docker &>/dev/null; then
+                is_container_runtime_service_active="YES"
+            fi
+        fi
+    fi
 	
-	#Check if we podman containers running 
-	is_podman_sql_containers="NO"
-	if [[ is_container_runtime_service_installed="NO" ]] && ( command -v podman &> /dev/null ); then
-    	    podman_sql_containers=$(podman ps --no-trunc | grep -e '/opt/mssql/bin/sqlservr' | awk '{ print $1 }' | wc -l)
-        	if [[ $podman_sql_containers > 0  ]]; then
-            	is_podman_sql_containers="YES"
-        	fi
-	fi
+    # Check for running podman SQL containers only if docker is not installed
+    if [[ "$is_container_runtime_service_installed" == "NO" ]] && command -v podman &>/dev/null; then
+        podman_sql_count=$(podman ps --no-trunc | grep -c '/opt/mssql/bin/sqlservr')
+        if (( podman_sql_count > 0 )); then
+            is_podman_sql_containers="YES"
+        fi
+    fi
 }
 
 #when pssdiag is running inside, kubernetes, pod or container. get the status
@@ -166,8 +162,6 @@ get_wsl_instance_status()
 	is_host_instance_inside_wsl="NO"
 	if [ -n "$WSL_DISTRO_NAME" ]; then
 		is_host_instance_inside_wsl="YES"
-	else
-		is_host_instance_inside_wsl="NO"
 	fi
 }
 
@@ -179,12 +173,9 @@ get_servicemanager_and_sqlservicestatus()
 	get_container_instance_status
 	get_host_instance_status
 	pssdiag_inside_container_get_instance_status
-	#check if sql is started by systemd
-	#if [[ "${1}" == "host_instance" ]] && [[ "${sqlservicestatus}" == "unknown" ]]; then
-	#	systemctl is-active mssql-server >/dev/null 2>&1 && { sqlservicestatus="active"; servicemanager="systemd"; } || { sqlservicestatus="unknown"; servicemanager="unknown"; }
-	#fi
+
 	if [[ "${1}" == "host_instance" ]] && [[ "${is_host_instance_service_installed}" == "YES" ]]; then
-		if [[ ${is_host_instance_service_active} == "YES" ]]; then
+		if [[ ${is_host_instance_process_running} == "YES" ]]; then
 			sqlservicestatus="active"
 			servicemanager="systemd"
 		else
@@ -198,7 +189,7 @@ get_servicemanager_and_sqlservicestatus()
 		supervisorctl status mssql-server >/dev/null 2>&1 && { sqlservicestatus="active"; servicemanager="supervisord"; } || { sqlservicestatus="unknown"; servicemanager="unknown"; }	
 	fi
 
-	#Check if sql is running on docker
+	#Check if sql is running in docker
 	if [[ "${1}" == "container_instance" ]] && [[ ! -z "$(docker ps -q --filter name=${2})" ]]; then
 		sqlservicestatus="active"
 		servicemanager="docker"
