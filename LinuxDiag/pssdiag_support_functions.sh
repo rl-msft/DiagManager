@@ -117,6 +117,7 @@ get_container_instance_status()
 	is_container_runtime_service_installed="NO"
 	is_container_runtime_service_enabled="NO"
 	is_container_runtime_service_active="NO"
+	is_podman_sql_containers="NO"
 
   # Check if system uses systemd
     if [[ "$(readlink /sbin/init)" == *systemd* ]]; then
