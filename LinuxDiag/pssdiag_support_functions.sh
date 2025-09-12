@@ -117,7 +117,9 @@ get_container_instance_status()
 	is_container_runtime_service_installed="NO"
 	is_container_runtime_service_enabled="NO"
 	is_container_runtime_service_active="NO"
+	is_docker_sql_containers="NO"
 	is_podman_sql_containers="NO"
+	is_podman_sql_containers_no_docker_runtime="NO"
 
   # Check if system uses systemd
     if [[ "$(readlink /sbin/init)" == *systemd* ]]; then
@@ -133,12 +135,28 @@ get_container_instance_status()
             fi
         fi
     fi
-	
-    # Check for running podman SQL containers only if docker is not installed
-    if [[ "$is_container_runtime_service_installed" == "NO" ]] && command -v podman &>/dev/null; then
+
+    # Check for running sql containers using docker 
+    if command -v docker &>/dev/null; then
+        docker_sql_count=$(docker ps --no-trunc | grep -c '/opt/mssql/bin/sqlservr')
+        if (( docker_sql_count > 0 )); then
+            is_docker_sql_containers="YES"
+        fi
+    fi
+
+    # Check for running sql containers using podman
+    if command -v podman &>/dev/null; then
         podman_sql_count=$(podman ps --no-trunc | grep -c '/opt/mssql/bin/sqlservr')
         if (( podman_sql_count > 0 )); then
             is_podman_sql_containers="YES"
+        fi
+    fi
+
+    # Check for running podman SQL containers only if docker is not installed
+    if [[ "$is_container_runtime_service_installed" == "NO" ]] && command -v podman &>/dev/null; then
+        podman_sql_count_no_docker_runtime=$(podman ps --no-trunc | grep -c '/opt/mssql/bin/sqlservr')
+        if (( podman_sql_count_no_docker_runtime > 0 )); then
+            is_podman_sql_containers_no_docker_runtime="YES"
         fi
     fi
 }

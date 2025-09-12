@@ -568,11 +568,7 @@ fi
 #by default we collect containers logs, many times there are no conatiners, it would be better to skip the logic for collect from containers
 #Here we are checking if we have SQL container running on the host, if not we set COLLECT_CONTAINER to NO regardless of what is set in the config file, scn file.
 COLLECT_CONTAINER="${COLLECT_CONTAINER^^}"
-checkContainerCommand="NO"
-if docker ps --no-trunc 2>/dev/null | grep -q '/opt/mssql/bin/sqlservr'; then
-    checkContainerCommand="yes"
-fi
-if [[ "$COLLECT_CONTAINER" != "NO" && "$checkContainerCommand" == "NO" ]] ; then
+if [[ "$COLLECT_CONTAINER" != "NO" && "$is_docker_sql_containers" == "NO" ]] ; then
 	COLLECT_CONTAINER="NO"
 	sed -i 's/^COLLECT_CONTAINER=.*/COLLECT_CONTAINER=NO/' ./pssdiag_collector.conf
 fi
@@ -631,7 +627,9 @@ echo "$(date -u +"%T %D") Host instance process running? ${is_host_instance_proc
 echo "$(date -u +"%T %D") Docker installed? ${is_container_runtime_service_installed}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Docker service enabled? ${is_container_runtime_service_enabled}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Docker service active? ${is_container_runtime_service_active}" >> $pssdiag_log
-echo "$(date -u +"%T %D") Using podman without docker engine? ${is_podman_sql_containers}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Using sql docker containers? ${is_docker_sql_containers}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Using sql podman containers? ${is_podman_sql_containers}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Using sql podman containers without docker engine? ${is_podman_sql_containers_no_docker_runtime}" >> $pssdiag_log
 #pssdiag_inside_container_get_instance_status
 echo "$(date -u +"%T %D") Running inside container? ${is_instance_inside_container_active}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Running inside WSL? ${is_host_instance_inside_wsl}" >> $pssdiag_log
