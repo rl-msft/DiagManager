@@ -22,23 +22,25 @@ if [[ $COLLECT_SQL_TRACE == [Yy][eE][sS]  ]]; then
 fi
 }
 
+#this is only used for container scenario
 sql_collect_xevent()
 {
 if [[ $COLLECT_EXTENDED_EVENTS == [Yy][eE][sS]  ]]; then
         echo -e "$(date -u +"%T %D") Collecting Extended events..." | tee -a $pssdiag_log
-	docker exec $1 sh -c "cd /var/opt/mssql/log  && tar cf /tmp/sql_xevent.tar *pssdiag_xevent*.xel "
+	docker exec $1 sh -c "cd /tmp  && tar cf /tmp/sql_xevent.tar *pssdiag_xevent*.xel "
         docker cp $1:/tmp/sql_xevent.tar ${outputdir}/${2}_${3}_sql_xevent.tar | 2>/dev/null
         docker exec $1 sh -c "rm -f /tmp/sql_xevent.tar"
+        docker exec $1 sh -c "cd /tmp  && rm -f *pssdiag_xevent*.xel"
 fi
 }
-
+#this is only used for container scenario
 sql_collect_trace()
 {
 if [[ $COLLECT_SQL_TRACE == [Yy][eE][sS]  ]]; then
         echo -e "$(date -u +"%T %D") Collecting SQL Trace..." | tee -a $pssdiag_log
-        docker exec $1 sh -c "cd /var/opt/mssql/log  && tar cf /tmp/sql_trace.tar *pssdiag_trace*.trc "
+        docker exec $1 sh -c "cd /tmp  && tar cf /tmp/sql_trace.tar *pssdiag_trace*.trc "
         docker cp $1:/tmp/sql_trace.tar ${outputdir}/${2}_${3}_sql_trace.tar | 2>/dev/null
-        docker exec $1 sh -c "rm -f /tmp/sql_trace.tar"
+        docker exec $1 sh -c "cd /tmp  && rm -f *pssdiag_trace*.trc"
 fi
 }
 
@@ -118,11 +120,11 @@ sql_collect_top_plans_CPU()
         done
 }
  
-# end of function definitions
 
-##############################
-# Start of main script
-#############################
+#########################
+# Start of main script  #
+# - Stop_collector.sh   #
+#########################
 
 authentication_mode=${1^^}
 
@@ -178,6 +180,11 @@ NOW=`date +"%m_%d_%Y_%H_%M"`
 
 echo -e "\x1B[2;34m============================================= Stopping PSSDiag =============================================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 
+# ──────────────────────────────────
+# Cleanup
+# - Clean up background processes
+# ──────────────────────────────────
+
 if [[ -f $outputdir/pssdiag_stoppids_sql_collectors.log ]]; then
 	echo "$(date -u +"%T %D") Starting to stop background processes that were collecting sql data..." | tee -a $pssdiag_log
 	#cat $outputdir/pssdiag_stoppids_sql_collectors.log
@@ -195,6 +202,10 @@ if [[ -f $outputdir/pssdiag_stoppids_os_collectors.log ]]; then
 	#rm -f $outputdir/pssdiag_stoppids_os_collectors.log 2> /dev/null
 fi
 
+# ────────────────────────────
+# Config section
+# - read config values
+# ────────────────────────────
 CONFIG_FILE="./pssdiag_collector.conf"
 if [[ -f $CONFIG_FILE ]]; then
 . $CONFIG_FILE
@@ -448,5 +459,6 @@ short_hostname="${HOSTNAME%%.*}"
 tar -cjf "output_${short_hostname}_${NOW}.tar.bz2" output
 echo -e "*** Data collected is in the file output_${short_hostname}_${NOW}.tar.bz2 ***"
 echo -e "\x1B[2;34m=================================================== Done ===================================================\x1B[0m"
+
 
 

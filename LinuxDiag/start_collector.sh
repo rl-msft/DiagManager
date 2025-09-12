@@ -79,7 +79,7 @@ sql_collect_xevent()
 		if [[ "$2" == "host_instance" ]] || [[ "$2" == "instance" ]]; then
 	                sed -i "s|##XeFileName##|${outputdir}/${1}_${2}_pssdiag_xevent.xel|" pssdiag_xevent_start.sql
 		else
-                    sed -i "s|##XeFileName##|/var/opt/mssql/log/${1}_${2}_pssdiag_xevent.xel|" pssdiag_xevent_start.sql
+                    sed -i "s|##XeFileName##|/tmp/${1}_${2}_pssdiag_xevent.xel|" pssdiag_xevent_start.sql
 		fi
                 "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_xevent_start.sql" -o"$outputdir/${1}_${2}_pssdiag_xevent_start.log"
         fi
@@ -96,7 +96,7 @@ sql_collect_trace()
 		if [[ "$2" == "host_instance" ]] || [[ "$2" == "instance" ]]; then
 			sed -i "s|##TraceFileName##|${outputdir}/${1}_${2}_pssdiag_trace|" pssdiag_trace_start.sql
 		else
-			sed -i "s|##TraceFileName##|/var/opt/mssql/log/${1}_${2}_pssdiag_trace|" pssdiag_trace_start.sql
+			sed -i "s|##TraceFileName##|/tmp/${1}_${2}_pssdiag_trace|" pssdiag_trace_start.sql
 		fi
 		"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"pssdiag_trace_start.sql" -o"$outputdir/${1}_${2}_pssdiag_trace_start.out"
         fi
