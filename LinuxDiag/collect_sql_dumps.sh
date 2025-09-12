@@ -13,7 +13,7 @@ echo -e "$(date -u +"%T %D") collecting dumps from container : $dockername..."  
 
 docker_has_mssqlconf=$(docker exec --user root ${dockername} sh -c "(ls /var/opt/mssql/mssql.conf >> /dev/null 2>&1 && echo YES) || echo NO")
 if [[ "${docker_has_mssqlconf}" == "YES" ]]; then
-        SQL_DUMP_DIR=$(get_docker_conf_optionx '/var/opt/mssql/mssql.conf' 'filelocation' 'defaultdumpdir' '/var/opt/mssql/log'  $dockername)
+        SQL_DUMP_DIR=$(get_docker_conf_option '/var/opt/mssql/mssql.conf' 'filelocation' 'defaultdumpdir' '/var/opt/mssql/log'  $dockername)
 else
         SQL_DUMP_DIR="/var/opt/mssql/log"
 fi
@@ -85,7 +85,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 	#only check if its installed, if its installed then regradlesss if its active or note we need to collect the logs 
 	if [ "${is_host_instance_service_installed}" == "YES" ]; then
 		if [ -e "/var/opt/mssql/mssql.conf" ]; then
-			SQL_DUMP_DIR=$(get_conf_optionx '/var/opt/mssql/mssql.conf' 'filelocation' 'defaultdumpdir' '/var/opt/mssql/log')
+			SQL_DUMP_DIR=$(get_conf_option '/var/opt/mssql/mssql.conf' 'filelocation' 'defaultdumpdir' '/var/opt/mssql/log')
 		else
 			SQL_DUMP_DIR="/var/opt/mssql/log"
 		fi

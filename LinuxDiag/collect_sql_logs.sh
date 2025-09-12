@@ -15,7 +15,7 @@ collect_docker_sql_logs()
 	#Collecting errorlog
 	echo -e "$(date -u +"%T %D") Collecting errorlog system_health alwayson_health trc logs : $dockername..." | tee -a $pssdiag_log
 	if [[ "${docker_has_mssqlconf}" == "YES" ]]; then
-		SQL_ERRORLOG=$(get_docker_conf_optionx '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog' $dockername)
+		SQL_ERRORLOG=$(get_docker_conf_option '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog' $dockername)
 		SQL_LOG_DIR=$(dirname $SQL_ERRORLOG)
 	else
 		SQL_ERRORLOG="/var/opt/mssql/log/errorlog"
@@ -33,7 +33,7 @@ collect_docker_sql_logs()
 	echo -e "$(date -u +"%T %D") Collecting sqlagent logs from container : $dockername..." | tee -a $pssdiag_log
 
 	if [[ "${docker_has_mssqlconf}" == "YES" ]]; then
-		SQL_AGENTLOG=$(get_docker_conf_optionx '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent' $dockername)
+		SQL_AGENTLOG=$(get_docker_conf_option '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent' $dockername)
 		SQL_AGENTLOG_DIR=$(dirname $SQL_AGENTLOG)
 	else
 		SQL_AGENTLOG="/var/opt/mssql/log/sqlagent"
@@ -54,9 +54,9 @@ collect_docker_sql_logs()
 
 	if [[ "${docker_has_loggerini}" == "YES" ]]; then
 		echo -e "$(date -u +"%T %D") Collecting pal logs from container : $dockername..." | tee -a $pssdiag_log
-		result=$(get_docker_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA' $dockername)
+		result=$(get_docker_conf_option '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA' $dockername)
 		if [ "$result" = "NA" ]; then
-			result=$(get_docker_conf_optionx '/var/opt/mssql/logger.ini' 'Output.sql' 'filename' 'NA' $dockername)
+			result=$(get_docker_conf_option '/var/opt/mssql/logger.ini' 'Output.sql' 'filename' 'NA' $dockername)
 		fi
 		if [ "${result}" != "NA" ]; then
 			PAL_LOG="${result}"
@@ -153,7 +153,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 	#only check if its installed, if its installed then regradlesss if its active or not we need to collect the logs 
 	if [ "${is_host_instance_service_installed}" == "YES" ]; then
 		if [ -e "/var/opt/mssql/mssql.conf" ]; then
-			SQL_ERRORLOG=$(get_conf_optionx '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog')
+			SQL_ERRORLOG=$(get_conf_option '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog')
 			SQL_LOG_DIR=$(dirname $SQL_ERRORLOG)
 		else
 			SQL_ERRORLOG="/var/opt/mssql/log/errorlog"
@@ -176,7 +176,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 		
 		#Collecting sqlagents logs
 		if [ -e "/var/opt/mssql/mssql.conf" ]; then
-			SQL_AGENTLOG=$(get_conf_optionx '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent')
+			SQL_AGENTLOG=$(get_conf_option '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent')
 			SQL_AGENTLOG_DIR=$(dirname $SQL_AGENTLOG)
 		else
 			SQL_AGENTLOG="/var/opt/mssql/log/sqlagent"
@@ -203,9 +203,9 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 		#Collecting pal logs 
 		if [ -e "/var/opt/mssql/logger.ini" ]; then
 			echo -e "$(date -u +"%T %D") Collecting pal logs from host instance : ${HOSTNAME}..." | tee -a $pssdiag_log
-			result=$(get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA')
+			result=$(get_conf_option '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA')
 			if [ "$result" = "NA" ]; then
-				result=$(get_conf_optionx '/var/opt/mssql/logger.ini' 'Output.sql' 'filename' 'NA')
+				result=$(get_conf_option '/var/opt/mssql/logger.ini' 'Output.sql' 'filename' 'NA')
 			fi
 			if [ "${result}" != "NA" ]; then
 				PAL_LOG="${result}"
@@ -282,9 +282,9 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 		#Collecting pal logs 
 		if [ -e "/var/opt/mssql/logger.ini" ]; then
 			echo -e "$(date -u +"%T %D") Collecting pal logs from instance : ${HOSTNAME}..." | tee -a $pssdiag_log
-			result=$(get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA')
+			result=$(get_conf_option '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA')
 			if [ "$result" = "NA" ]; then
-				result=$(get_conf_optionx '/var/opt/mssql/logger.ini' 'Output.sql' 'filename' 'NA')
+				result=$(get_conf_option '/var/opt/mssql/logger.ini' 'Output.sql' 'filename' 'NA')
 			fi
 			if [ "${result}" != "NA" ]; then
 				PAL_LOG="${result}"

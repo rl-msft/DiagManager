@@ -29,7 +29,7 @@ echo -e "$(date -u +"%T %D") Collecting AD logs from container instance $dockern
 #Check if we have configuration files. default container deployment with no mounts do not have /var/opt/mssql/mssql.conf so we need to check this upfront. 
 docker_has_mssqlconf=$(docker exec --user root ${dockername} sh -c "(ls /var/opt/mssql/mssql.conf >> /dev/null 2>&1 && echo YES) || echo NO")
 if [[ "${docker_has_mssqlconf}" == "YES" ]]; then
-SQL_SERVICE_KEYTAB_FILE=$(get_docker_conf_optionx '/var/opt/mssql/mssql.conf' 'network' 'kerberoskeytabfile' '' $dockername)
+SQL_SERVICE_KEYTAB_FILE=$(get_docker_conf_option '/var/opt/mssql/mssql.conf' 'network' 'kerberoskeytabfile' '' $dockername)
 docker_has_mssql_keytab=$(docker exec --user root ${dockername} sh -c "(ls ${SQL_SERVICE_KEYTAB_FILE} >> /dev/null 2>&1 && echo YES) || echo NO")
     if [[ "${docker_has_mssql_keytab}" == "NO" ]]; then
         echo -e "$(date -u +"%T %D") skipping collecting AD logs, there is no mssql.keytab file for container instance $dockername..." | tee -a $pssdiag_log
@@ -60,7 +60,7 @@ docker_has_mssql_keytab=$(docker exec --user root ${dockername} sh -c "(ls ${SQL
 
         #Collecting service account kvno information     
         echo -e "$(date -u +"%T %D") Collecting service account kvno information from container instance $dockername..." | tee -a $pssdiag_log
-        SQL_SERVICE_ACCOUNT_KVNO=$(get_docker_conf_optionx '/var/opt/mssql/mssql.conf' 'network' 'privilegedadaccount' '' $dockername)
+        SQL_SERVICE_ACCOUNT_KVNO=$(get_docker_conf_option '/var/opt/mssql/mssql.conf' 'network' 'privilegedadaccount' '' $dockername)
         
         if [ "${linuxdistro}" == "sles" ];then
             capture_system_info_command "Sql Service account /usr/lib/mit/bin/kvno: /usr/lib/mit/bin/kvno ${SQL_SERVICE_ACCOUNT_KVNO}" "/usr/lib/mit/bin/kvno ${SQL_SERVICE_ACCOUNT_KVNO}"
@@ -146,7 +146,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 
 		if [ -e "/var/opt/mssql/mssql.conf" ]; then
 
-			SQL_SERVICE_KEYTAB_FILE=$(get_conf_optionx '/var/opt/mssql/mssql.conf' 'network' 'kerberoskeytabfile' '')
+			SQL_SERVICE_KEYTAB_FILE=$(get_conf_option '/var/opt/mssql/mssql.conf' 'network' 'kerberoskeytabfile' '')
 
 			if [ ! -e ${SQL_SERVICE_KEYTAB_FILE} ]; then
 				echo -e "$(date -u +"%T %D") skipping collecting AD logs, there is no mssql.keytab file for host instance : ${HOSTNAME}..." | tee -a $pssdiag_log
@@ -157,7 +157,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" = "YES" ]]; then
 				
 				# Capture service account knvo info
 				echo -e "$(date -u +"%T %D") Collecting service account kvno information from host instance : ${HOSTNAME}..." | tee -a $pssdiag_log
-				SQL_SERVICE_ACCOUNT_KVNO=$(get_conf_optionx '/var/opt/mssql/mssql.conf' 'network' 'privilegedadaccount' '')
+				SQL_SERVICE_ACCOUNT_KVNO=$(get_conf_option '/var/opt/mssql/mssql.conf' 'network' 'privilegedadaccount' '')
 				linuxdistro=`cat /etc/os-release | grep -i '^ID=' | head -n1 | awk -F'=' '{print $2}' | sed 's/"//g'`
 				if [ "${linuxdistro}" == "sles" ];then
 					capture_system_info_command "Sql Service account /usr/lib/mit/bin/kvno: /usr/lib/mit/bin/kvno ${SQL_SERVICE_ACCOUNT_KVNO}" "/usr/lib/mit/bin/kvno ${SQL_SERVICE_ACCOUNT_KVNO}"

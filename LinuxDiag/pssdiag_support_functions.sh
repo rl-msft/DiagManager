@@ -350,38 +350,10 @@ if [[ "$1" == "container_instance" ]]; then
 fi
 }
 
-
-#$(get_conf_option 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog')
+#get_conf_option '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent'
+#get_conf_option '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog'
+#get_conf_option '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA' 
 get_conf_option()
-{
-unset result
-#result=$(/opt/mssql/bin/mssql-conf get $1 $2 | awk '!/^No setting/ {print $3}')
-result=$(cat /var/opt/mssql/mssql.conf | awk  -F' *= *' '$1 ~ '"/$2/"' {print $2}')
-
-echo "host conf option '$1 $2': ${result:-$3}">>$pssdiag_log 
-echo ${result:-$3} | tee -a $pssdiag_log
-
-}
-
-get_docker_conf_option()
-{
-unset result
-
-#command="/opt/mssql/bin/mssql-conf get $2 $3"'| awk '"'"'!/^No setting/ {print $3}'"'" 
-
-command="cat /var/opt/mssql/mssql.conf | awk -F' *= *' ""'"'$1 ~ '"/$2/"' {print $2}'"'"
-
-result=$(docker exec ${1} sh -c "$command" --user root)
-
-echo "docker conf option '$2 $3': ${result:-$4}">>$pssdiag_log | tee -a $pssdiag_log
-echo ${result:-$4} | tee -a $pssdiag_log
-
-}
-
-#get_conf_optionx '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent'
-#get_conf_optionx '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog'
-#get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA' 
-get_conf_optionx()
 {
 unset result
 unset config_section_found
@@ -413,10 +385,10 @@ fi
 echo ${result:-$4} 
 }
 
-#get_conf_optionx '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent' 'dockername'
-#get_conf_optionx '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog' 'dockername'
-#get_conf_optionx '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA' 'dockername'
-get_docker_conf_optionx()
+#get_conf_option '/var/opt/mssql/mssql.conf' 'sqlagent' 'errorlogfile' '/var/opt/mssql/log/sqlagent' 'dockername'
+#get_conf_option '/var/opt/mssql/mssql.conf' 'filelocation' 'errorlogfile' '/var/opt/mssql/log/errorlog' 'dockername'
+#get_conf_option '/var/opt/mssql/logger.ini' 'Output:sql' 'filename' 'NA' 'dockername'
+get_docker_conf_option()
 {
 unset result
 unset config_section_found
