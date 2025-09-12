@@ -123,9 +123,10 @@ sql_collect_perfstats_snapshot()
 
 # end of all function definitions
 
-#################################
-# start of main script execution
-#################################
+#########################
+# Start of main script  #
+# - start_collector.sh  #
+#########################
 
 echo "" 
 
@@ -291,7 +292,12 @@ if [[ -n "$scenario" ]]; then
 	fi
 fi
 
-#if scenario has not been passed and we are running with systemd system, present the user with options
+# ─────────────────────────────────────────────────────────────────────────────────────
+# - Get user input for scenario   
+# - if scenario has not been passed and we are running with systemd system                  
+# - PSSDiag running on host OS                
+# ─────────────────────────────────────────────────────────────────────────────────────
+
 if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]]; then
 	echo -e "\x1B[2;34m============================================ Select Run Scenario ===========================================\x1B[0m" 
 	echo "Run Scenario's:"
@@ -387,6 +393,12 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 	done 
 fi
 
+# ─────────────────────────────────────────────────────────────────────────────────────
+# - Get user input for authentication_mode   
+# - if authentication_mode has not been passed                
+# - PSSDiag running on host OS                
+# ─────────────────────────────────────────────────────────────────────────────────────
+
 #if authentication_mode has not been passed and we are running with systemd system, ask the user for input
 if [[ -z "$authentication_mode" ]] && [[ "$is_instance_inside_container_active" == "NO" ]]; then
 	echo -e "\x1B[2;34m======================================== Select Authentication Mode ========================================\x1B[0m" 
@@ -433,7 +445,11 @@ if [[ -z "$authentication_mode" ]] && [[ "$is_instance_inside_container_active" 
 	done 
 fi
 
-#if scenario has not been passed and we are running with system that has no systemd
+# ─────────────────────────────────────────────────────────────────────────────────────
+# - Get user input for scenario                  
+# - if scenario has not been passed and we are with no systemd     
+# - PSSDiag running inside container               
+# ─────────────────────────────────────────────────────────────────────────────────────
 if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]; then
 	echo -e "\x1B[2;34m============================================ Select Run Scenario ===========================================\x1B[0m" 
 	echo "Run Scenario's:"
