@@ -4,16 +4,22 @@
 examples
 
 -- In this case dm_os_memory_clerks in the print statement will become your table name when imported by SQL Nexus
+set nocount on
 PRINT '-- dm_os_memory_clerks'
+DECLARE @runtime datetime
+SET @runtime = GETDATE()
+
 SELECT CONVERT (varchar(30), getdate(), 121) as runtime, * FROM sys.dm_os_memory_clerks
 RAISERROR ('', 0, 1) WITH NOWAIT
 
 -- if you want DMV to run in loop during PSSDiag execution, below is an example that will in loop every 30 seconds, DO NOT use for complex TSQL Script that returns large resultset. 
-PRINT '-- sys.dm_os_memory_brokers'
+set nocount on
 DECLARE @runtime datetime
 
 WHILE 1=1
 begin
+	PRINT '-- sys.dm_os_memory_brokers'
+	SET @runtime = GETDATE()
 	select CONVERT (varchar(30), @runtime, 121) as runtime,* from sys.dm_os_memory_brokers
 	RAISERROR ('', 0, 1) WITH NOWAIT
 	WAITFOR DELAY '00:00:30'
