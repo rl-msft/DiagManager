@@ -826,7 +826,7 @@ printf "%s\n" "$anchorpid" >> $outputdir/pssdiag_stoppids_os_collectors.log
 pgrep -P $anchorpid  >> $outputdir/pssdiag_stoppids_os_collectors.log
 # anchor
 
-echo -e "\x1B[2;34m==============================  Startup Completd, Data Collection in Progress ==============================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
+echo -e "\x1B[2;34m==============================  Startup Completed, Data Collection in Progress ==============================\x1B[0m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 echo -e "" | tee -a $pssdiag_log
 echo -e "\033[0;33m############################################################################################################\033[0;31m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")
 echo -e "\033[0;33m#                 Please reproduce the problem now and then stop data collection afterwards                #\033[0;31m" | tee >(sed -e 's/\x1b\[[0-9;]*m//g' >> "$pssdiag_log")

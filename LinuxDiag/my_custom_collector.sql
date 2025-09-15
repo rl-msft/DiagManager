@@ -5,7 +5,7 @@ examples
 
 -- In this case dm_os_memory_clerks in the print statement will become your table name when imported by SQL Nexus
 set nocount on
-PRINT '-- dm_os_memory_clerks'
+PRINT '-- dm_os_memory_clerks --'
 DECLARE @runtime datetime
 SET @runtime = GETDATE()
 
@@ -18,7 +18,7 @@ DECLARE @runtime datetime
 
 WHILE 1=1
 begin
-	PRINT '-- sys.dm_os_memory_brokers'
+	PRINT '-- sys.dm_os_memory_brokers --'
 	SET @runtime = GETDATE()
 	select CONVERT (varchar(30), @runtime, 121) as runtime,* from sys.dm_os_memory_brokers
 	RAISERROR ('', 0, 1) WITH NOWAIT
