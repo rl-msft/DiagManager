@@ -1,7 +1,7 @@
 --This is an example query
 -- If you need a custom TSQL collector place your queries in this file and enable the CUSTOM_COLLETOR=YES in pssdiag_collector.conf, works only for sql_perf.scn type of scenarios.
 /*
-examples
+examples:-
 
 -- In this case dm_os_memory_clerks in the print statement will become your table name when imported by SQL Nexus
 set nocount on
