@@ -25,6 +25,6 @@ begin
 	WAITFOR DELAY '00:00:30'
 end
 
--- if you have multiple simply DMVs to run, then create new file with name that start with my_custom_collector_<name>.sql for example(my_custom_collector_DMV1.sql, my_custom_collector_DMV2.sql ...etc)
+-- if you have multiple simply DMVs to run, then create new file with name that start with my_sql_custom_collector_<name>.sql for example(my_custom_collector_DMV1.sql, my_custom_collector_DMV2.sql ...etc)
 
 */

@@ -54,16 +54,15 @@ sql_collect_memstats()
         fi
 }
 
-sql_collect_custom()
+sql_collect_sql_custom()
 {
         if [[ $CUSTOM_COLLECTOR == [Yy][eE][sS] ]] ; then
                 #Start Custom Collector  scripts as a background job
                 echo -e "$(date -u +"%T %D") Starting SQL Custom Collector Scripts as a background job.... " | tee -a $pssdiag_log
-                for filename in my_custom_collector*.sql; do
+                for filename in my_sql_custom_collector*.sql; do
                    `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"${filename}" -o"$outputdir/${1}_${2}_${filename}_Output.out"` &
                     mypid=$!
-                    #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
-		    sleep 5s
+		    		sleep 5s
                     pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.log
                 done
         fi
@@ -709,7 +708,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 			sql_collect_perfstats "${HOSTNAME}" "host_instance"
 			sql_collect_counters "${HOSTNAME}" "host_instance"
 			sql_collect_memstats "${HOSTNAME}" "host_instance"
-			sql_collect_custom "${HOSTNAME}" "host_instance"
+			sql_collect_sql_custom "${HOSTNAME}" "host_instance"
 			sql_collect_xevent "${HOSTNAME}" "host_instance"
 			sql_collect_trace "${HOSTNAME}" "host_instance"
 			sql_collect_config "${HOSTNAME}" "host_instance"
@@ -740,7 +739,7 @@ if [[ "$COLLECT_HOST_SQL_INSTANCE" == "YES" ]];then
 			sql_collect_perfstats "${HOSTNAME}" "instance"
 			sql_collect_counters "${HOSTNAME}" "instance"
 			sql_collect_memstats "${HOSTNAME}" "instance"
-			sql_collect_custom "${HOSTNAME}" "instance"
+			sql_collect_sql_custom "${HOSTNAME}" "instance"
 			sql_collect_xevent "${HOSTNAME}" "instance"
 			sql_collect_trace "${HOSTNAME}" "instance"
 			sql_collect_config "${HOSTNAME}" "instance"
@@ -777,7 +776,7 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
            	    sql_collect_perfstats "${dockername}" "container_instance"      
 				sql_collect_counters "${dockername}" "container_instance"
 	            sql_collect_memstats "${dockername}" "container_instance"
-        	    sql_collect_custom "${dockername}" "container_instance"
+        	    sql_collect_sql_custom "${dockername}" "container_instance"
                 sql_collect_xevent "${dockername}" "container_instance"
 				sql_collect_trace "${dockername}" "container_instance"
 				sql_collect_config "${dockername}" "container_instance"
@@ -804,7 +803,7 @@ if [[ "$COLLECT_CONTAINER" != "NO" ]]; then
 						sql_collect_perfstats "${dockername}" "container_instance"
                 	    sql_collect_counters "${dockername}" "container_instance"
 	                    sql_collect_memstats "${dockername}" "container_instance"
-        	            sql_collect_custom "${dockername}" "container_instance"
+        	            sql_collect_sql_custom "${dockername}" "container_instance"
                 	    sql_collect_xevent "${dockername}" "container_instance"
 						sql_collect_trace "${dockername}" "container_instance"
 						sql_collect_config "${dockername}" "container_instance"
