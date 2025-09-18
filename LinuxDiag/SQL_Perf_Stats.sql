@@ -181,7 +181,7 @@ AS
         SET @querystarttime = GETDATE()
         SELECT 
           IDENTITY (int,1,1) AS tmprownum, 
-          r.session_id, r.request_id, r.ecid, r.blocking_session_id, ISNULL (waits.blocking_exec_context_id, 0) AS blocking_ecid, 
+          r.session_id, r.transaction_id, r.request_id, r.ecid, r.blocking_session_id, ISNULL (waits.blocking_exec_context_id, 0) AS blocking_ecid, 
           r.task_state, waits.wait_type, ISNULL (waits.wait_duration_ms, 0) AS wait_duration_ms, r.wait_resource, 
           LEFT (ISNULL (waits.resource_description, ''), 140) AS resource_description, r.last_wait_type, r.open_trans, 
           r.transaction_isolation_level, r.is_user_process, r.request_cpu_time, r.request_logical_reads, r.request_reads, 
@@ -213,7 +213,7 @@ AS
           r.request_start_time, r.request_status, r.command, r.plan_handle, r.[sql_handle], r.statement_start_offset, 
           r.statement_end_offset, r.database_id, r.[user_id], r.executing_managed_code, r.pending_io_count, r.login_time, 
           r.[host_name], r.[program_name], r.host_process_id, r.client_version, r.client_interface_name, r.login_name, r.nt_domain, 
-          r.nt_user_name, r.net_packet_size, r.client_net_address, r.most_recent_sql_handle, r.session_status, r.scheduler_id,
+          r.nt_user_name, r.net_packet_size, r.client_net_address, r.most_recent_sql_handle, r.session_status, r.scheduler_id, 
           -- r.is_preemptive, r.is_sick, r.last_worker_exception, r.last_exception_address, 
           -- r.os_thread_id
           r.group_id, r.query_hash, r.query_plan_hash
@@ -227,6 +227,7 @@ AS
         LEFT OUTER MERGE JOIN #dm_tran_active_transactions sesstrans ON sesstrans.transaction_id = sessions_transactions.transaction_id
         
         LEFT OUTER MERGE JOIN #dm_os_waiting_tasks waits ON waits.waiting_task_address = r.task_address 
+
         ORDER BY r.session_id, blocking_ecid
         /* redundant due to the use of join hints, but added here to suppress warning message */
         OPTION (MAX_GRANT_PERCENT = 3, MAXDOP 1)
@@ -246,9 +247,9 @@ AS
         SET @querystarttime = GETDATE()
 
         SELECT TOP 10000 CONVERT (varchar(30), @runtime, 126) AS 'runtime', 
-          session_id, request_id, ecid, blocking_session_id, blocking_ecid, task_state, 
+          session_id, transaction_id, request_id, ecid, blocking_session_id, blocking_ecid, task_state, 
           wait_type, wait_duration_ms, wait_resource, resource_description, last_wait_type, 
-          open_trans, transaction_isolation_level, is_user_process, 
+          open_trans, transaction_isolation_level,  is_user_process, 
           request_cpu_time, request_logical_reads, request_reads, request_writes, memory_usage, 
           session_cpu_time, session_reads, session_writes, session_logical_reads, total_scheduled_time, 
           total_elapsed_time, CONVERT (varchar(30), last_request_start_time, 126) AS 'last_request_start_time', 
@@ -261,7 +262,7 @@ AS
           executing_managed_code, pending_io_count, CONVERT (varchar(30), login_time, 126) AS 'login_time', 
           [host_name], [program_name], host_process_id, client_version, client_interface_name, login_name, 
           nt_domain, nt_user_name, net_packet_size, client_net_address, session_status, 
-          scheduler_id,
+          scheduler_id, 
           -- is_preemptive, is_sick, last_worker_exception, last_exception_address
           -- os_thread_id
           group_id, query_hash, query_plan_hash, plan_handle      
@@ -844,6 +845,31 @@ CREATE PROCEDURE #sp_perf_stats_infrequent @runtime datetime, @prevruntime datet
     IF @queryduration > @qrydurationwarnthreshold
       PRINT 'DebugPrint: perfstats2 qry22 - ' + CONVERT (varchar, @queryduration) + 'ms' + CHAR(13) + CHAR(10)
 
+    /* Resultset #23: dm_io_pending_io_requests */
+    PRINT ''
+    RAISERROR ('-- dm_io_pending_io_requests --', 0, 1) WITH NOWAIT;
+    SET @querystarttime = GETDATE()
+
+    SELECT /*qry23*/ CONVERT (varchar(30), @runtime, 126) as 'runtime',
+        io_handle_path, 
+        io_type, 
+        io_pending,
+        CASE 
+            WHEN io_pending = 0 THEN 'Pending in SQL Server'
+            WHEN io_pending = 1 THEN 'Pending in OS'
+            ELSE 'Unknown'
+        END AS pending_in,
+        COUNT(*) AS request_count
+    FROM sys.dm_io_pending_io_requests
+    GROUP BY io_handle_path, io_type, io_pending
+    ORDER BY request_count DESC
+
+
+    RAISERROR (' ', 0, 1) WITH NOWAIT;
+    SET @queryduration = DATEDIFF (ms, @querystarttime, GETDATE())
+    IF @queryduration > @qrydurationwarnthreshold
+      PRINT 'DebugPrint: perfstats2 qry23 - ' + CONVERT (varchar, @queryduration) + 'ms' + CHAR(13) + CHAR(10)
+
     /* Raise a diagnostic message if we use more CPU than normal (a typical execution uses <200ms) */
     DECLARE @cpu_time bigint, @elapsed_time bigint
     SELECT @cpu_time = cpu_time - @cpu_time_start, @elapsed_time = total_elapsed_time - @elapsed_time_start FROM sys.dm_exec_sessions WHERE session_id = @@SPID
@@ -1274,7 +1300,7 @@ AS
         SET @prevreallyinfreqruntime = @runtime
       END
     SET @prevruntime = @runtime
-    WAITFOR DELAY '0:0:10'
+    WAITFOR DELAY '0:0:05'
     END TRY
     BEGIN CATCH
 				PRINT 'Exception occured in: "' + OBJECT_NAME(@@PROCID)  + '"'     

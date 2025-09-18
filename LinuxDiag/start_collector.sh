@@ -9,19 +9,37 @@ sql_collect_perfstats()
 {
         if [[ $COLLECT_PERFSTATS == [Yy][eE][sS] ]] ; then
                 #Start regular PerfStats script as a background job
-                echo -e "$(date -u +"%T %D") Starting SQL Perf Stats script as a background job...." | tee -a $pssdiag_log
+                echo -e "$(date -u +"%T %D") Starting SQL Perf Stats script as a background job..." | tee -a $pssdiag_log
                 `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Perf_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Perf_Stats.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
-		sleep 5s
+				sleep 5s
                 pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.log
 
-				echo -e "$(date -u +"%T %D") Starting SQL Linux Stats script as a background job...." | tee -a $pssdiag_log
-                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Linux_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Stats.out"` &
+				#Start Linux Stats script as a background job
+				echo -e "$(date -u +"%T %D") Starting SQL Linux Stats script as a background job..." | tee -a $pssdiag_log
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Linux_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Perf_Stats.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
-		sleep 5s
+				sleep 5s
                 pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.log
+
+				#Start HighCPU Stats script as a background job
+				echo -e "$(date -u +"%T %D") Starting SQL High CPU Stats script as a background job..." | tee -a $pssdiag_log
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_HighCPU_Perf_Stats.sql" -o"$outputdir/${1}_${2}_SQL_HighCPU_Perf_Stats.out"` &
+                mypid=$!
+                #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
+				sleep 5s
+                pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.log
+
+				#Start High_IO Stats script as a background job
+				echo -e "$(date -u +"%T %D") Starting SQL High IO Stats script as a background job..." | tee -a $pssdiag_log
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_HighIO_Perf_Stats.sql" -o"$outputdir/${1}_${2}_SQL_HighIO_Perf_Stats.out"` &
+                mypid=$!
+                #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
+				sleep 5s
+                pgrep -P $mypid  >> $outputdir/pssdiag_stoppids_sql_collectors.log
+
         fi
 }
 
