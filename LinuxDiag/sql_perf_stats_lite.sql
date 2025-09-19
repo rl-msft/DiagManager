@@ -771,10 +771,10 @@ CREATE PROCEDURE #sp_Run_PerfStats @IsLite bit = 0
 AS
   -- Main loop
     
-  PRINT 'Starting SQL Server Perf Stats Script...'
+  PRINT 'Starting SQL Server Perf Stats lite Script...'
   SET LANGUAGE us_english
   PRINT '-- Script Source --'
-  SELECT 'SQL Server Perf Stats Script' AS script_name, '$Revision: 16 $ ($Change: ? $)' AS revision
+  SELECT 'SQL Server Perf Stats Lite Script' AS script_name, '17.1' AS revision
   PRINT ''
   PRINT '-- Script and Environment Details --'
   PRINT 'Name                     Value'
@@ -783,10 +783,10 @@ AS
   PRINT 'Machine Name             ' + CONVERT (varchar, SERVERPROPERTY ('MachineName'))
   PRINT 'SQL Version (SP)         ' + CONVERT (varchar, SERVERPROPERTY ('ProductVersion')) + ' (' + CONVERT (varchar, SERVERPROPERTY ('ProductLevel')) + ')'
   PRINT 'Edition                  ' + CONVERT (varchar, SERVERPROPERTY ('Edition'))
-  PRINT 'Script Name              SQL Server Perf Stats Script'
-  PRINT 'Script File Name         $File: SQL_Server_Perf_Stats.sql $'
-  PRINT 'Revision                 $Revision: 17 $ ($Change: ? $)'
-  PRINT 'Last Modified            $Date: 2025/8/23  $'
+  PRINT 'Script Name              SQL Server Perf Stats Lite Script'
+  PRINT 'Script File Name         File: sql_perf_stats_lite.sql'
+  PRINT 'Revision                 Revision: 17.1'
+  PRINT 'Last Modified            Date: 2025/9/19'
   PRINT 'Script Begin Time        ' + CONVERT (varchar(30), GETDATE(), 126) 
   PRINT 'Current Database         ' + DB_NAME()
   PRINT '@@SPID                   ' + LTRIM(STR(@@SPID))

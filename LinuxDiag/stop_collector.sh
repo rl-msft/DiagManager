@@ -81,7 +81,7 @@ sql_collect_config()
 sql_collect_linux_snapshot()
 {
         echo -e "$(date -u +"%T %D") Collecting SQL Linux Snapshot at Shutdown..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_linux_snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Snapshot_Shutdown.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_linux_perf_stats_snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Perf_Stats_Snapshot_Shutdown.out"
 }
 
 sql_collect_databases_disk_map()

@@ -129,7 +129,7 @@ sql_collect_config()
 sql_collect_linux_snapshot()
 {
         echo -e "$(date -u +"%T %D") Collecting SQL Linux Snapshot at Startup..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_linux_snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Snapshot_Startup.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_linux_perf_stats_snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Perf_Stats_Snapshot_Startup.out"
 }
 
 sql_collect_perfstats_snapshot()
@@ -565,7 +565,7 @@ fi
 # - Check if PerfStatsfilename is valid, set to default if not
 # - PSSDiag...               
 # ─────────────────────────────────────────────────────────────────────────────────────
-PerfStatsfilename_allowed_values=("sql_perf_stats_quickwaits.sql" "sql_perf_stats.sql")
+PerfStatsfilename_allowed_values=("sql_perf_stats_lite.sql" "sql_perf_stats.sql")
 if [[ ! " ${PerfStatsfilename_allowed_values[@]} " =~ " ${PerfStatsfilename} " ]]; then
     PerfStatsfilename="sql_perf_stats.sql"
 fi

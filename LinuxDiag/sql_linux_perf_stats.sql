@@ -135,6 +135,29 @@ CREATE PROCEDURE sp_perf_stats_infrequent12 @runtime datetime, @firstrun int = 0
   END
 GO
   -- Main loop
+   
+  PRINT 'Starting SQL Server Linux Perf Stats Script...'
+  SET LANGUAGE us_english
+  PRINT '-- Script Source --'
+  SELECT 'SQL Server Linux Perf Stats Script' AS script_name, '17' AS revision
+  PRINT ''
+  PRINT '-- Script and Environment Details --'
+  PRINT 'Name                     Value'
+  PRINT '------------------------ ---------------------------------------------------'
+  PRINT 'SQL Server Name          ' + @@SERVERNAME
+  PRINT 'Machine Name             ' + CONVERT (varchar, SERVERPROPERTY ('MachineName'))
+  PRINT 'SQL Version (SP)         ' + CONVERT (varchar, SERVERPROPERTY ('ProductVersion')) + ' (' + CONVERT (varchar, SERVERPROPERTY ('ProductLevel')) + ')'
+  PRINT 'Edition                  ' + CONVERT (varchar, SERVERPROPERTY ('Edition'))
+  PRINT 'Script Name              SQL Server Linux Perf Stats Script'
+  PRINT 'Script File Name         File: sql_linux_perf_stats.sql'
+  PRINT 'Revision                 Revision: 17'
+  PRINT 'Last Modified            Date: 2025/9/19'
+  PRINT 'Script Begin Time        ' + CONVERT (varchar(30), GETDATE(), 126) 
+  PRINT 'Current Database         ' + DB_NAME()
+  PRINT '@@SPID                   ' + LTRIM(STR(@@SPID))
+  PRINT ''
+
+
   DECLARE @i int
   DECLARE @msg varchar(100)
   DECLARE @runtime datetime
