@@ -106,8 +106,8 @@ sql_collect_trace()
 {
         #start any SQL trace collection if defined? 
         if [[ $COLLECT_SQL_TRACE == [Yy][eE][sS]  ]]; then
-		echo -e "$(date -u +"%T %D") Creating helper stored procedures in tempdb from MSDiagprocs.sql" >> $pssdiag_log
-		"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"MSDiagProcs.sql" -o"$outputdir/${1}_${2}_MSDiagprocs.out"
+		echo -e "$(date -u +"%T %D") Creating helper stored procedures in tempdb from msdiagprocs.sql" >> $pssdiag_log
+		"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"msdiagprocs.sql" -o"$outputdir/${1}_${2}_MSDiagprocs.out"
                 echo -e "$(date -u +"%T %D") Starting SQL trace collection...  " | tee -a $pssdiag_log
                 cp -f ./${SQL_TRACE_TEMPLATE}.template ./pssdiag_trace_start.sql
 		if [[ "$2" == "host_instance" ]] || [[ "$2" == "instance" ]]; then
