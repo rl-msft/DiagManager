@@ -14,7 +14,7 @@ GO
 IF OBJECT_ID ('#sp_perf_virtual_file_stats','P') IS NOT NULL
 DROP PROCEDURE #sp_perf_virtual_file_stats
 GO
-CREATE PROCEDURE #sp_perf_virtual_file_stats @appname sysname='sqllogscout', @runtime DATETIME, @runtime_utc DATETIME
+CREATE PROCEDURE #sp_perf_virtual_file_stats @appname sysname='pssdiag', @runtime DATETIME, @runtime_utc DATETIME
 AS
 SET NOCOUNT ON
 BEGIN
@@ -49,7 +49,7 @@ GO
 IF OBJECT_ID ('#sp_perf_io_snapshots','P') IS NOT NULL
 DROP PROCEDURE #sp_perf_io_snapshots
 GO
-CREATE PROCEDURE #sp_perf_io_snapshots @appname sysname='sqllogscout', @runtime DATETIME, @runtime_utc DATETIME
+CREATE PROCEDURE #sp_perf_io_snapshots @appname sysname='pssdiag', @runtime DATETIME, @runtime_utc DATETIME
 AS
 SET NOCOUNT ON
 BEGIN
@@ -225,11 +225,11 @@ AS
             
                 if (@counter % 6 = 0)  -- capture this data every 1 minute
                 BEGIN
-                    EXEC #sp_perf_virtual_file_stats 'sqllogscout', @runtime = @runtime, @runtime_utc = @runtime_utc
+                    EXEC #sp_perf_virtual_file_stats 'pssdiag', @runtime = @runtime, @runtime_utc = @runtime_utc
                 END
                 
                 -- Collect sp_perf_high_io_snapshot every 3 minutes
-                EXEC #sp_perf_io_snapshots 'sqllogscout', @runtime = @runtime, @runtime_utc = @runtime_utc
+                EXEC #sp_perf_io_snapshots 'pssdiag', @runtime = @runtime, @runtime_utc = @runtime_utc
                 SET @prevruntime = @runtime
                 WAITFOR DELAY '0:00:10'
                 SET @counter = @counter + 1

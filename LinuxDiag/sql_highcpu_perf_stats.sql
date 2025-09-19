@@ -15,7 +15,7 @@ IF OBJECT_ID ('#sp_perf_high_cpu_snapshots','P') IS NOT NULL
    DROP PROCEDURE #sp_perf_high_cpu_snapshots
 GO
 
-CREATE PROCEDURE #sp_perf_high_cpu_snapshots @appname sysname='sqllogscout', @runtime datetime, @runtime_utc datetime
+CREATE PROCEDURE #sp_perf_high_cpu_snapshots @appname sysname='pssdiag', @runtime datetime, @runtime_utc datetime
 AS
 SET NOCOUNT ON
 BEGIN
@@ -130,7 +130,7 @@ BEGIN TRY
 			RAISERROR (@msg, 0, 1) WITH NOWAIT
 			
 			-- Collect sp_perf_high_Cpu_snapshot every 3 minutes
-			EXEC #sp_perf_high_cpu_snapshots 'sqllogscout', @runtime = @runtime, @runtime_utc = @runtime_utc
+			EXEC #sp_perf_high_cpu_snapshots 'pssdiag', @runtime = @runtime, @runtime_utc = @runtime_utc
 			SET @prevruntime = @runtime
 			WAITFOR DELAY '0:00:30'
 		END TRY
