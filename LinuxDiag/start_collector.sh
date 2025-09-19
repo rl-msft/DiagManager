@@ -18,7 +18,7 @@ sql_collect_perfstats()
 
 				#Start Linux Stats script as a background job
 				echo -e "$(date -u +"%T %D") Starting SQL Linux Stats script as a background job..." | tee -a $pssdiag_log
-                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_linux_stats.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Perf_Stats.out"` &
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_linux_perf_stats.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Perf_Stats.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 				sleep 5s
