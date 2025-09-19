@@ -169,7 +169,6 @@ BEGIN
             --flush results to client
             RAISERROR (' ', 0, 1) WITH NOWAIT
 
-
         END
     
     END TRY
