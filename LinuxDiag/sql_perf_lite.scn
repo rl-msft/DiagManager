@@ -55,13 +55,13 @@ COLLECT_PERFSTATS=YES
 
 # Specify YES or NO. 
 COLLECT_EXTENDED_EVENTS=YES
-# Specify which template to use for Extended Events: pssdiag_xevent_general, pssdiag_xevent_detailed, pssdiag_xevent_light
-EXTENDED_EVENT_TEMPLATE=pssdiag_xevent_light
+# Specify which template to use for Extended Events: pssdiag_xevent_general, pssdiag_xevent_detailed, pssdiag_xevent_lite
+EXTENDED_EVENT_TEMPLATE=pssdiag_xevent_lite
 
 # Specify YES or NO. 
 COLLECT_SQL_TRACE=NO
-# Specify which template to use for SQL Trace: pssdiag_trace_general, pssdiag_trace_detailed, pssdiag_trace_light, pssdiag_trace_replication
-SQL_TRACE_TEMPLATE=pssdiag_trace_light
+# Specify which template to use for SQL Trace: pssdiag_trace_general, pssdiag_trace_detailed, pssdiag_trace_lite, pssdiag_trace_replication
+SQL_TRACE_TEMPLATE=pssdiag_trace_lite
 
 # Specify whether we need to extract QDS/Query Store information from this server
 COLLECT_QUERY_STORE=YES

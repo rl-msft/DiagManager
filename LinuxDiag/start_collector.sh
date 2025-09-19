@@ -230,13 +230,13 @@ if [ -z "$SUDO_USER" ] && [ "$is_instance_inside_container_active" = "NO" ]; the
 fi
 
 #Checks: make sure we have a valid scenario entered, we are running with system that has systemd
-if [[ ! -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]] && [[ "$scenario" != "static_collect.scn" ]] && [[ "$scenario" != "sql_perf_light.scn" ]] && [[ "$scenario" != "sql_perf_general.scn" ]] && [[ "$scenario" != "sql_perf_detailed.scn" ]]; then
+if [[ ! -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]] && [[ "$scenario" != "static_collect.scn" ]] && [[ "$scenario" != "sql_perf_lite.scn" ]] && [[ "$scenario" != "sql_perf_general.scn" ]] && [[ "$scenario" != "sql_perf_detailed.scn" ]]; then
 	echo -e "\x1B[31mError is specifying a scenario (first argument passed to PSSDiag)\x1B[0m"
 	echo "" 
 	echo "Valid options are:" 
 	echo "  static_collect.scn"
 	echo "  sql_perf_minimal.scn"
-	echo "  sql_perf_light.scn"
+	echo "  sql_perf_lite.scn"
 	echo "  sql_perf_general.scn"
 	echo "  sql_perf_detailed.scn"
 	echo "" 
@@ -264,13 +264,13 @@ if [[ ! -z "$authentication_mode" ]] && [[ "$is_instance_inside_container_active
 fi
 
 #Checks: make sure we have a valid scenario entered, we are running with system that has no systemd
-if [[ ! -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]] && [[ "$scenario" != "static_collect_kube.scn" ]] && [[ "$scenario" != "sql_perf_light_kube.scn" ]] && [[ "$scenario" != "sql_perf_general_kube.scn" ]] && [[ "$scenario" != "sql_perf_detailed_kube.scn" ]]; then
+if [[ ! -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]] && [[ "$scenario" != "static_collect_kube.scn" ]] && [[ "$scenario" != "sql_perf_lite_kube.scn" ]] && [[ "$scenario" != "sql_perf_general_kube.scn" ]] && [[ "$scenario" != "sql_perf_detailed_kube.scn" ]]; then
 	echo -e "\x1B[31mError is specifying a scenario (first argument passed to PSSDiag)\x1B[0m"
 	echo "" 
 	echo "Valid options are:" 
 	echo "  static_collect_kube.scn"
 	echo "  sql_perf_minimal_kube.scn"
-	echo "  sql_perf_light_kube.scn"
+	echo "  sql_perf_lite_kube.scn"
 	echo "  sql_perf_general_kube.scn"
 	echo "  sql_perf_detailed_kube.scn"	
 	echo "" 
@@ -331,14 +331,14 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 	echo    "| 2 |sql_perf_minimal.scn   |Collects minimal performance data from SQL without extended events            |"
 	echo    "|   |                       |suitable for extended use.                                                    |"
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
-	echo    "| 3 |sql_perf_light.scn     |Collects lightweight performance data from SQL and host OS,                   |"
+	echo    "| 3 |sql_perf_lite.scn      |Collects lightweight performance data from SQL and host OS,                   |"
 	echo    "|   |                       |suitable for extended use.                                                    |"
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
-	echo    "| 4 |sql_perf_general.scn   |Collects general performance data from SQL and host OS, suitable for          |"
+	echo    "| 4 |sql_perf_general.scn   |Collects general performance data from SQL and host OS, ideal for             |"
 	echo    "|   |                       |15 to 20-minute collection periods, covering most scenarios.                  |"
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
-	echo    "| 5 |sql_perf_detailed.scn  |Collects detailed performance data at statement level, Avoid using this       |"
-	echo    "|   |                       |scenario as it may affect server performance                                  |"
+	echo -e "| 5 |sql_perf_detailed.scn  |Collects detailed performance data at statement level, \033[1;31mUse with Caution\033[0m       |"
+	echo    "|   |                       |may impact server performance.                                                |"
 	echo    "+---+-----------------------+------------------------------------------------------------------------------+"
 	echo ""
 	scn_user_selected=""
@@ -363,7 +363,7 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "NO" ]];
 			scenario="sql_perf_minimal.scn"
 		fi
 		if [[ ${scn_user_selected} == 3 ]]; then
-			scenario="sql_perf_light.scn"
+			scenario="sql_perf_lite.scn"
 		fi
 		if [[ ${scn_user_selected} == 4 ]]; then
 			scenario="sql_perf_general.scn"
@@ -484,13 +484,13 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 	echo    "| 2 |sql_perf_minimal_kube.scn |Collects minimal performance data from SQL without extended events         |"
 	echo    "|   |                          |suitable for extended use.                                                 |"
 	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
-	echo    "| 3 |sql_perf_light_kube.scn   |Collects lightweight performance data from SQL, suitable for extended use. |"
+	echo    "| 3 |sql_perf_lite_kube.scn    |Collects lightweight performance data from SQL, suitable for extended use. |"
 	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
-	echo    "| 4 |sql_perf_general_kube.scn |Collects general performance data from SQL, suitable for 15 to 20-minute   |"
+	echo    "| 4 |sql_perf_general_kube.scn |Collects general performance data from SQL, Ideal for 15 to 20-minute      |"
 	echo    "|   |                          |collection periods, covering most scenarios.                               |"
 	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
-	echo    "| 5 |sql_perf_detailed_kube.scn|Collects detailed performance data at statement level, Avoid using this    |"
-	echo    "|   |                          |scenario as it may affect server performance                               |"
+	echo -e "| 5 |sql_perf_detailed_kube.scn|Collects detailed performance data at statement level, \033[1;31mUse with Caution\033[0m       |"
+	echo    "|   |                          |may impact server performance.                                             |"
 	echo    "+---+--------------------------+---------------------------------------------------------------------------+"
 	echo ""
 	scn_user_selected=""
@@ -513,7 +513,7 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 			scenario="sql_perf_minimal_kube.scn"
 		fi
 		if [[ ${scn_user_selected} == 3 ]]; then
-			scenario="sql_perf_light_kube.scn"
+			scenario="sql_perf_lite_kube.scn"
 		fi
 		if [[ ${scn_user_selected} == 4 ]]; then
 			scenario="sql_perf_general_kube.scn"
@@ -578,9 +578,9 @@ COLLECT_OS_COUNTERS=${COLLECT_OS_COUNTERS:-"NO"}
 OS_COUNTERS_INTERVAL=${OS_COUNTERS_INTERVAL:=-"15"}
 COLLECT_PERFSTATS=${COLLECT_PERFSTATS:-"NO"}
 COLLECT_EXTENDED_EVENTS=${COLLECT_EXTENDED_EVENTS:-"NO"}
-EXTENDED_EVENT_TEMPLATE=${EXTENDED_EVENT_TEMPLATE:-"pssdiag_xevent_light"}
+EXTENDED_EVENT_TEMPLATE=${EXTENDED_EVENT_TEMPLATE:-"pssdiag_xevent_lite"}
 COLLECT_SQL_TRACE=${COLLECT_SQL_TRACE:-"NO"}
-SQL_TRACE_TEMPLATE=${SQL_TRACE_TEMPLATE:-"pssdiag_trace_light"}
+SQL_TRACE_TEMPLATE=${SQL_TRACE_TEMPLATE:-"pssdiag_trace_lite"}
 COLLECT_SQL_COUNTERS=${COLLECT_SQL_COUNTERS:-"NO"}
 SQL_COUNTERS_INTERVAL=${SQL_COUNTERS_INTERVAL:-"15"}
 COLLECT_SQL_MEM_STATS=${COLLECT_SQL_MEM_STATS:-"NO"}

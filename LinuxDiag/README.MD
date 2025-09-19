@@ -71,7 +71,7 @@ when running PSSDiag from host machine, PSSDiag will collect information from bo
 |   |                          |the OS and SQL without collecting any performance data. (Default)             |
 | 2 |sql_perf_minimal.scn      |Collects lightweight performance data from SQL without extended events        |
 |   |                          |suitable for extended use.                                                    |
-| 3 |sql_perf_light.scn        |Collects lightweight performance data from SQL and the operating system,      |
+| 3 |sql_perf_lite.scn         |Collects lightweight performance data from SQL and the operating system,      |
 |   |                          |suitable for extended use.                                                    |
 | 4 |sql_perf_general.scn      |Collects general performance data from SQL and the OS, suitable for           |
 |   |                          |15 to 20-minute collection periods, covering most scenarios.                  |
@@ -89,7 +89,7 @@ In the case when SQL container is deployed to Kubernetes, you can run PSSDiag fr
 |   |                          |(Default)                                                                    |
 | 2 |sql_perf_minimal_kube.scn |Collects lightweight performance data from SQL without extended events       |
 |   |                          |suitable for extended use.                                                   |
-| 2 |sql_perf_light_kube.scn   |Collects lightweight performance data from SQL, suitable for extended use.   |
+| 2 |sql_perf_lite_kube.scn    |Collects lightweight performance data from SQL, suitable for extended use.   |
 | 3 |sql_perf_general_kube.scn |Collects general performance data from SQL, suitable for 15 to 20-minute     |
 |   |                          |collection periods, covering most scenarios.                                 |
 | 4 |sql_perf_detailed_kube.scn|Collects detailed performance data from SQL; avoid using this method for     |
@@ -164,7 +164,7 @@ PSSDiag has the following scenarios:
 
 you are Not limited by the default secarions, you can create your own based on your requirments and pass it as argument to pssdiag
 
-|**Area** |**Control Setting**        |**Accepted values**  |**Description**                   |**pre-req**             |**static_collect.scn**|**sql_perf_minimal.scn** |**sql_perf_light.scn** |**sql_perf_general.scn** |**sql_perf_detailed.scn** |
+|**Area** |**Control Setting**        |**Accepted values**  |**Description**                   |**pre-req**             |**static_collect.scn**|**sql_perf_minimal.scn** |**sql_perf_lite.scn**  |**sql_perf_general.scn** |**sql_perf_detailed.scn** |
 |---------|---------------------------|---------------------|----------------------------------|------------------------|----------------------|-------------------------|-----------------------|-------------------------|--------------------------|
 |SQL      |COLLECT_HOST_SQL_INSTANCE  |YES/NO               |Collect from host SQL instance    |                        |YES                   |YES                      |YES                    |YES                      |YES                       |
 |SQL      |COLLECT_CONTAINER          |NO/CONTAINERNAME/ALL |Collect from container instance   |                        |ALL                   |ALL                      |ALL                    |ALL                      |ALL                       |
@@ -175,7 +175,7 @@ you are Not limited by the default secarions, you can create your own based on y
 |SQL      |COLLECT_SQL_LOGS           |YES/NO               |SQL Server configuration          |mssql-tool* (sqlcmd)    |YES                   |YES                      |YES                    |YES                      |YES                       |
 |SQL      |COLLECT_SQL_DUMPS          |YES/NO               |SQL dumps                         |                        |YES                   |YES                      |YES                    |YES                      |YES                       |
 |SQL      |COLLECT_EXTENDED_EVENTS    |YES/NO               |Extended events                   |mssql-tool* (sqlcmd)    |NA                    |YES                      |YES                    |YES                      |YES                       |
-|SQL      |EXTENDED_EVENT_TEMPLATE    |YES/NO               |Extended events template used     |mssql-tool* (sqlcmd)    |NA                    |NO                       |pssdiag_xevent_light   |pssdiag_xevent_general   |pssdiag_xevent_detailed   |
+|SQL      |EXTENDED_EVENT_TEMPLATE    |YES/NO               |Extended events template used     |mssql-tool* (sqlcmd)    |NA                    |NO                       |pssdiag_xevent_lite    |pssdiag_xevent_general   |pssdiag_xevent_detailed   |
 |SQL      |COLLECT_SQL_TRACE          |YES/NO               |SQL Trace                         |mssql-tool* (sqlcmd)    |NA                    |NO                       |NO                     |NO                       |NO                        |
 |SQL      |SQL_TRACE_TEMPLATE         |YES/NO               |SQL Trace template used           |                        |NA                    |NO                       |NO                     |NO                       |NO                        |
 |SQL      |COLLECT_PERFSTATS          |YES/NO               |waits, blocking                   |mssql-tool* (sqlcmd)    |NO                    |YES                      |YES                    |NO                       |NO                        |
