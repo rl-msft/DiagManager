@@ -171,7 +171,7 @@ AS
         SET @querystarttime = GETDATE()
         SELECT 
           IDENTITY (int,1,1) AS tmprownum, 
-          r.session_id, r.transaction_id, r.request_id, r.ecid, r.blocking_session_id, ISNULL (waits.blocking_exec_context_id, 0) AS blocking_ecid, 
+          r.session_id, r.request_id, r.ecid, r.blocking_session_id, ISNULL (waits.blocking_exec_context_id, 0) AS blocking_ecid, 
           r.task_state, waits.wait_type, ISNULL (waits.wait_duration_ms, 0) AS wait_duration_ms, r.wait_resource, 
           LEFT (ISNULL (waits.resource_description, ''), 140) AS resource_description, r.last_wait_type, r.open_trans, 
           r.transaction_isolation_level, r.is_user_process, r.request_cpu_time, r.request_logical_reads, r.request_reads, 
@@ -203,7 +203,7 @@ AS
           r.request_start_time, r.request_status, r.command, r.plan_handle, r.[sql_handle], r.statement_start_offset, 
           r.statement_end_offset, r.database_id, r.[user_id], r.executing_managed_code, r.pending_io_count, r.login_time, 
           r.[host_name], r.[program_name], r.host_process_id, r.client_version, r.client_interface_name, r.login_name, r.nt_domain, 
-          r.nt_user_name, r.net_packet_size, r.client_net_address, r.most_recent_sql_handle, r.session_status, r.scheduler_id, 
+          r.nt_user_name, r.net_packet_size, r.client_net_address, r.most_recent_sql_handle, r.session_status, r.scheduler_id,
           -- r.is_preemptive, r.is_sick, r.last_worker_exception, r.last_exception_address, 
           -- r.os_thread_id
           r.group_id, r.query_hash, r.query_plan_hash
@@ -217,7 +217,6 @@ AS
         LEFT OUTER MERGE JOIN #dm_tran_active_transactions sesstrans ON sesstrans.transaction_id = sessions_transactions.transaction_id
         
         LEFT OUTER MERGE JOIN #dm_os_waiting_tasks waits ON waits.waiting_task_address = r.task_address 
-
         ORDER BY r.session_id, blocking_ecid
         /* redundant due to the use of join hints, but added here to suppress warning message */
         OPTION (MAX_GRANT_PERCENT = 3, MAXDOP 1)
@@ -237,9 +236,9 @@ AS
         SET @querystarttime = GETDATE()
 
         SELECT TOP 10000 CONVERT (varchar(30), @runtime, 126) AS 'runtime', 
-          session_id, transaction_id, request_id, ecid, blocking_session_id, blocking_ecid, task_state, 
+          session_id, request_id, ecid, blocking_session_id, blocking_ecid, task_state, 
           wait_type, wait_duration_ms, wait_resource, resource_description, last_wait_type, 
-          open_trans, transaction_isolation_level,  is_user_process, 
+          open_trans, transaction_isolation_level, is_user_process, 
           request_cpu_time, request_logical_reads, request_reads, request_writes, memory_usage, 
           session_cpu_time, session_reads, session_writes, session_logical_reads, total_scheduled_time, 
           total_elapsed_time, CONVERT (varchar(30), last_request_start_time, 126) AS 'last_request_start_time', 
@@ -252,7 +251,7 @@ AS
           executing_managed_code, pending_io_count, CONVERT (varchar(30), login_time, 126) AS 'login_time', 
           [host_name], [program_name], host_process_id, client_version, client_interface_name, login_name, 
           nt_domain, nt_user_name, net_packet_size, client_net_address, session_status, 
-          scheduler_id, 
+          scheduler_id,
           -- is_preemptive, is_sick, last_worker_exception, last_exception_address
           -- os_thread_id
           group_id, query_hash, query_plan_hash, plan_handle      
@@ -483,6 +482,132 @@ AS
 
 GO
 
+
+IF OBJECT_ID ('#sp_perf_stats_infrequent','P') IS NOT NULL
+   DROP PROCEDURE #sp_perf_stats_infrequent
+GO
+CREATE PROCEDURE #sp_perf_stats_infrequent @runtime datetime, @prevruntime datetime, @lastmsticks bigint output, @firstrun tinyint = 0, @IsLite bit = 0
+ AS 
+ 
+  SET NOCOUNT ON
+  print '-- debug info starting #sp_perf_stats_infrequent --'
+  print ''
+  DECLARE @queryduration int
+  DECLARE @querystarttime datetime
+  DECLARE @qrydurationwarnthreshold int
+  DECLARE @cpu_time_start bigint, @elapsed_time_start bigint
+  DECLARE @servermajorversion int
+  DECLARE @msg varchar(100)
+  DECLARE @sql nvarchar(max)
+  DECLARE @rowcount bigint
+  DECLARE @msticks bigint
+  DECLARE @mstickstime datetime
+  DECLARE @procname varchar(50) = OBJECT_NAME(@@PROCID)
+
+  BEGIN TRY
+    IF @runtime IS NULL 
+    BEGIN 
+      SET @runtime = GETDATE()
+      SET @msg = 'Start time: ' + CONVERT (varchar(30), @runtime, 126)
+      RAISERROR (@msg, 0, 1) WITH NOWAIT
+    END
+    SET @qrydurationwarnthreshold = 750
+
+    SELECT @cpu_time_start = cpu_time, @elapsed_time_start = total_elapsed_time FROM sys.dm_exec_sessions WHERE session_id = @@SPID
+
+    /* SERVERPROPERTY ('ProductVersion') returns e.g. "9.00.2198.00" --> 9 */
+    SET @servermajorversion = REPLACE (LEFT (CONVERT (varchar, SERVERPROPERTY ('ProductVersion')), 2), '.', '')
+
+
+    /* Resultset #1: Server global wait stats */
+    PRINT ''
+    RAISERROR ('-- dm_os_wait_stats --', 0, 1) WITH NOWAIT;
+    SET @querystarttime = GETDATE()
+
+    SELECT /*qry1*/ CONVERT (varchar(30), @runtime, 126) AS 'runtime', waiting_tasks_count, wait_time_ms, max_wait_time_ms, signal_wait_time_ms, wait_type
+    FROM sys.dm_os_wait_stats 
+    WHERE waiting_tasks_count > 0 OR wait_time_ms > 0 OR signal_wait_time_ms > 0
+    ORDER BY wait_time_ms DESC
+
+    RAISERROR (' ', 0, 1) WITH NOWAIT;
+    SET @queryduration = DATEDIFF (ms, @querystarttime, GETDATE())
+    IF @queryduration > @qrydurationwarnthreshold
+      PRINT 'DebugPrint: perfstats2 qry1 - ' + CONVERT (varchar, @queryduration) + 'ms' + CHAR(13) + CHAR(10)
+
+
+    /* Resultset #2: Spinlock stats
+    ** No DMV for this -- we will synthesize the [runtime] column during data load. */
+    --PRINT ''
+    --RAISERROR ('-- DBCC SQLPERF (SPINLOCKSTATS) --', 0, 1) WITH NOWAIT;
+    --DBCC SQLPERF (SPINLOCKSTATS)
+
+
+    /* Resultset #2a: dm_os_spinlock_stats */
+    PRINT ''
+    RAISERROR ('--  dm_os_spinlock_stats --', 0, 1) WITH NOWAIT;
+    SET @querystarttime = GETDATE()
+
+    SELECT /*qry2a*/ CONVERT (varchar(30), @runtime, 126) AS 'runtime', collisions, spins, spins_per_collision, sleep_time, backoffs, name 
+    FROM sys.dm_os_spinlock_stats
+    WHERE spins > 0
+
+    RAISERROR (' ', 0, 1) WITH NOWAIT;
+    SET @queryduration = DATEDIFF (ms, @querystarttime, GETDATE())
+    IF @queryduration > @qrydurationwarnthreshold
+      PRINT 'DebugPrint: perfstats2 qry2a - ' + CONVERT (varchar, @queryduration) + 'ms' + CHAR(13) + CHAR(10)
+
+    /* Resultset #6: sys.dm_os_latch_stats */
+    PRINT ''
+    RAISERROR ('-- sys.dm_os_latch_stats --', 0, 1) WITH NOWAIT;
+    SELECT /*qry6*/ CONVERT (varchar(30), @runtime, 126) AS 'runtime', waiting_requests_count, wait_time_ms, max_wait_time_ms, latch_class
+      FROM sys.dm_os_latch_stats 
+    WHERE waiting_requests_count > 0 OR wait_time_ms > 0 OR max_wait_time_ms > 0
+      ORDER BY wait_time_ms DESC
+      OPTION (MAX_GRANT_PERCENT = 3, MAXDOP 1)
+
+    /* Resultset #11: dm_os_schedulers 
+    ** no reason to list columns since no long character columns */
+    PRINT ''
+    RAISERROR ('-- dm_os_schedulers --', 0, 1) WITH NOWAIT;
+    SELECT /*qry11*/ CONVERT (varchar(30), @runtime, 126) as 'runtime', * 
+    FROM sys.dm_os_schedulers
+
+    /* Resultset #12: dm_os_nodes */
+    PRINT ''
+    RAISERROR ('-- sys.dm_os_nodes --', 0, 1) WITH NOWAIT;
+    SELECT /*qry12*/ CONVERT (varchar(30), @runtime, 126) as 'runtime', node_id, memory_object_address, memory_clerk_address, io_completion_worker_address, memory_node_id, cpu_affinity_mask, online_scheduler_count, idle_scheduler_count, active_worker_count, avg_load_balance, timer_task_affinity_mask, permanent_task_affinity_mask, resource_monitor_state,/* online_scheduler_mask,*/ /*processor_group,*/ node_state_desc 
+    FROM sys.dm_os_nodes
+
+    /* Resultset #13: dm_os_memory_nodes 
+    ** no reason to list columns since no long character columns */
+    PRINT ''
+    RAISERROR ('-- sys.dm_os_memory_nodes --', 0, 1) WITH NOWAIT;
+    SELECT /*qry13*/ CONVERT (varchar(30), @runtime, 126) as 'runtime',* 
+    FROM sys.dm_os_memory_nodes
+
+
+    /* Resultset #14: Lock summary */
+    PRINT ''
+    RAISERROR ('-- Lock summary --', 0, 1) WITH NOWAIT;
+    SET @querystarttime = GETDATE()
+
+    select /*qry14*/ CONVERT (varchar(30), @runtime, 126) as 'runtime', * from 
+      (SELECT  count (*) as 'LockCount', Resource_database_id, LEFT(resource_type,15) as 'resource_type', LEFT(request_mode,20) as 'request_mode', request_status 
+      FROM sys.dm_tran_locks 
+      GROUP BY  Resource_database_id, resource_type, request_mode, request_status ) t
+
+    RAISERROR (' ', 0, 1) WITH NOWAIT;
+    SET @queryduration = DATEDIFF (ms, @querystarttime, GETDATE())
+    IF @queryduration > @qrydurationwarnthreshold
+      PRINT 'DebugPrint: perfstats2 qry14 - ' + CONVERT (varchar, @queryduration) + 'ms' + CHAR(13) + CHAR(10)
+
+  END TRY
+  BEGIN CATCH
+	  PRINT 'Exception occured in: "' + OBJECT_NAME(@@PROCID)  + '"'     
+	  PRINT 'Msg ' + isnull(cast(Error_Number() as nvarchar(50)), '') + ', Level ' + isnull(cast(Error_Severity() as nvarchar(50)),'') + ', State ' + isnull(cast(Error_State() as nvarchar(50)),'') + ', Server ' + @@servername + ', Line ' + isnull(cast(Error_Line() as nvarchar(50)),'') + char(10) +  Error_Message() + char(10);
+  END CATCH
+GO
+
 IF OBJECT_ID ('#sp_perf_stats10','P') IS NOT NULL
    DROP PROCEDURE #sp_perf_stats10
 GO
@@ -557,13 +682,84 @@ BEGIN
 	EXEC #sp_perf_stats15 @appname, @runtime, @prevruntime, @IsLite
 END
 GO
-IF OBJECT_ID ('#sp_perf_stats17','P') IS NOT NULL
-   DROP PROCEDURE #sp_perf_stats17
-GO
 CREATE PROCEDURE #sp_perf_stats17 @appname sysname='PSSDIAG', @runtime datetime, @prevruntime datetime , @IsLite bit =0 
 AS 
 BEGIN
 	EXEC #sp_perf_stats16 @appname, @runtime, @prevruntime, @IsLite
+END
+GO
+
+IF OBJECT_ID ('#sp_perf_stats_infrequent10','P') IS NOT NULL
+   DROP PROCEDURE #sp_perf_stats_infrequent10
+GO
+CREATE PROCEDURE #sp_perf_stats_infrequent10 @runtime datetime, @prevruntime datetime, @lastmsticks bigint output, @firstrun tinyint = 0, @IsLite bit =0 
+ AS 
+BEGIN
+	EXEC #sp_perf_stats_infrequent @runtime, @prevruntime, @firstrun, @IsLite
+END
+go
+
+IF OBJECT_ID ('#sp_perf_stats_infrequent11','P') IS NOT NULL
+   DROP PROCEDURE #sp_perf_stats_infrequent11
+GO
+CREATE PROCEDURE #sp_perf_stats_infrequent11 @runtime datetime, @prevruntime datetime, @lastmsticks bigint output, @firstrun tinyint = 0, @IsLite bit =0 
+ AS 
+BEGIN
+	EXEC #sp_perf_stats_infrequent10 @runtime, @prevruntime, @firstrun, @IsLite
+END
+GO
+IF OBJECT_ID ('#sp_perf_stats_infrequent12','P') IS NOT NULL
+   DROP PROCEDURE #sp_perf_stats_infrequent12
+GO
+CREATE PROCEDURE #sp_perf_stats_infrequent12 @runtime datetime, @prevruntime datetime, @lastmsticks bigint output, @firstrun tinyint = 0, @IsLite bit =0 
+ AS 
+BEGIN
+	EXEC #sp_perf_stats_infrequent11 @runtime, @prevruntime, @firstrun, @IsLite
+END
+GO
+IF OBJECT_ID ('#sp_perf_stats_infrequent13','P') IS NOT NULL
+   DROP PROCEDURE #sp_perf_stats_infrequent13
+GO
+CREATE PROCEDURE #sp_perf_stats_infrequent13 @runtime datetime, @prevruntime datetime, @lastmsticks bigint output, @firstrun tinyint = 0, @IsLite bit =0 
+ AS 
+BEGIN
+	EXEC #sp_perf_stats_infrequent12 @runtime, @prevruntime, @firstrun, @IsLite
+END
+GO
+IF OBJECT_ID ('#sp_perf_stats_infrequent14','P') IS NOT NULL
+   DROP PROCEDURE #sp_perf_stats_infrequent14
+GO
+CREATE PROCEDURE #sp_perf_stats_infrequent14 @runtime datetime, @prevruntime datetime, @lastmsticks bigint output, @firstrun tinyint = 0, @IsLite bit =0 
+ AS 
+BEGIN
+	EXEC #sp_perf_stats_infrequent13 @runtime, @prevruntime, @firstrun, @IsLite
+END
+GO
+IF OBJECT_ID ('#sp_perf_stats_infrequent15','P') IS NOT NULL
+   DROP PROCEDURE #sp_perf_stats_infrequent15
+GO
+CREATE PROCEDURE #sp_perf_stats_infrequent15 @runtime datetime, @prevruntime datetime, @lastmsticks bigint output, @firstrun tinyint = 0, @IsLite bit =0 
+ AS 
+BEGIN
+	EXEC #sp_perf_stats_infrequent14 @runtime, @prevruntime, @firstrun, @IsLite
+END
+GO
+IF OBJECT_ID ('#sp_perf_stats_infrequent16','P') IS NOT NULL
+   DROP PROCEDURE #sp_perf_stats_infrequent16
+GO
+CREATE PROCEDURE #sp_perf_stats_infrequent16 @runtime datetime, @prevruntime datetime, @lastmsticks bigint output, @firstrun tinyint = 0, @IsLite bit =0 
+AS 
+BEGIN
+	EXEC #sp_perf_stats_infrequent15 @runtime, @prevruntime, @lastmsticks output, @firstrun, @IsLite
+END
+GO
+IF OBJECT_ID ('#sp_perf_stats_infrequent17','P') IS NOT NULL
+   DROP PROCEDURE #sp_perf_stats_infrequent17
+GO
+CREATE PROCEDURE #sp_perf_stats_infrequent17 @runtime datetime, @prevruntime datetime, @lastmsticks bigint output, @firstrun tinyint = 0, @IsLite bit =0 
+AS 
+BEGIN
+	EXEC #sp_perf_stats_infrequent15 @runtime, @prevruntime, @lastmsticks output, @firstrun, @IsLite
 END
 GO
 
@@ -612,7 +808,7 @@ AS
 
   DECLARE @servermajorversion nvarchar(2)
   SET @servermajorversion = REPLACE (LEFT (CONVERT (varchar, SERVERPROPERTY ('ProductVersion')), 2), '.', '')
-  declare @#sp_perf_stats_ver sysname, @#sp_perf_stats_reallyinfrequent_ver sysname, @#sp_perf_stats_infrequent_ver sysname
+  declare @#sp_perf_stats_ver sysname, @#sp_perf_stats_infrequent_ver sysname
   set @#sp_perf_stats_ver = '#sp_perf_stats' + @servermajorversion
   set @#sp_perf_stats_infrequent_ver = '#sp_perf_stats_infrequent' + @servermajorversion
 
@@ -630,9 +826,15 @@ AS
       --EXEC dbo.#sp_perf_stats @appname = 'pssdiag', @runtime = @runtime, @prevruntime = @prevruntime
     	EXEC @#sp_perf_stats_ver 'pssdiag', @runtime = @runtime, @prevruntime = @prevruntime, @IsLite=@IsLite
 
+      -- Collect #sp_perf_stats_infrequent approximately every minute
+      if DATEDIFF(SECOND, @previnfreqruntime,GETDATE()) > 29
+      BEGIN
+        EXEC @#sp_perf_stats_infrequent_ver  @runtime = @runtime, @prevruntime = @previnfreqruntime, @lastmsticks = @lastmsticks output, @firstrun = @firstrun,  @IsLite=@IsLite
+	      SET @previnfreqruntime = @runtime
+      END
 
     SET @prevruntime = @runtime
-    WAITFOR DELAY '0:0:02'
+    WAITFOR DELAY '0:0:05'
     END TRY
     BEGIN CATCH
 				PRINT 'Exception occured in: "' + OBJECT_NAME(@@PROCID)  + '"'     
