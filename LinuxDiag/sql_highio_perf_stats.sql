@@ -112,29 +112,60 @@ BEGIN
             
             SELECT @sql_major_version = (CAST(PARSENAME(CAST(SERVERPROPERTY('ProductVersion') AS VARCHAR(20)), 4) AS INT))
                 
-            SET @sql = N'SELECT CONVERT (VARCHAR(30), @runtime, 121) AS runtime
-                            ,[io_completion_request_address]
-                            ,[io_type]
-                            ,[io_pending_ms_ticks]
-                            ,[io_pending]
-                            ,[io_completion_routine_address]
-                            ,[io_user_data_address]
-                            ,[scheduler_address]
-                            ,[io_handle]
-                            ,[io_offset]
-                        '
-            IF (@sql_major_version >=12)
-            BEGIN
-            SET @sql = @sql + N',[io_handle_path]'
-            END
+            IF OBJECT_ID ('tempdb.dbo.#dm_io_pending_io_requests') IS NOT NULL 
+                DROP TABLE #dm_io_pending_io_requests
             
-            SET @sql = @sql + N' FROM sys.dm_io_pending_io_requests'
-                
-            
+            SELECT 
+            CONVERT(VARCHAR(30), @runtime, 121) AS runtime,
+            io_completion_request_address,
+            io_type,
+            io_pending_ms_ticks,
+            io_pending,
+            io_completion_routine_address,
+            io_user_data_address,
+            scheduler_address,
+            io_handle,
+            io_offset,
+                CASE 
+                    WHEN @sql_major_version >= 12 
+                    THEN io_handle_path 
+                    ELSE NULL 
+                END AS io_handle_path
+            INTO #dm_io_pending_io_requests
+            FROM sys.dm_io_pending_io_requests
+
+            SET @sql = N'select * from #dm_io_pending_io_requests'
+
             EXECUTE sp_executesql @sql,
                                 N'@runtime DATETIME',
                                 @runtime = @runtime;
-                    
+   
+            --flush results to client
+            RAISERROR (' ', 0, 1) WITH NOWAIT
+
+            PRINT  ''
+            PRINT  '--  sys.dm_io_pending_io_requests Aggregated --'
+            IF (@sql_major_version >=12)
+            BEGIN
+                SET @sql = N'SELECT CONVERT (VARCHAR(30), @runtime, 121) AS runtime,
+                                io_handle_path, 
+                                io_type, 
+                                io_pending,
+                                CASE 
+                                    WHEN io_pending = 0 THEN ''Pending in SQL Server''
+                                    WHEN io_pending = 1 THEN ''Pending in OS''
+                                ELSE ''Unknown''
+                                END AS pending_in,
+                                COUNT(*) AS request_count
+                                FROM #dm_io_pending_io_requests
+                                GROUP BY io_handle_path, io_type, io_pending
+                                ORDER BY request_count DESC'
+
+                EXECUTE sp_executesql @sql,
+                                    N'@runtime DATETIME',
+                                    @runtime = @runtime;
+            END
+
             --flush results to client
             RAISERROR (' ', 0, 1) WITH NOWAIT
 

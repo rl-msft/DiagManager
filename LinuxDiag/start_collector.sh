@@ -565,7 +565,7 @@ fi
 # - Check if PerfStatsfilename is valid, set to default if not
 # - PSSDiag...               
 # ─────────────────────────────────────────────────────────────────────────────────────
-PerfStatsfilename_allowed_values=("sql_perf_stats_io.sql" "sql_perf_stats_quickwaits.sql" "sql_perf_stats.sql")
+PerfStatsfilename_allowed_values=("sql_perf_stats_quickwaits.sql" "sql_perf_stats.sql")
 if [[ ! " ${PerfStatsfilename_allowed_values[@]} " =~ " ${PerfStatsfilename} " ]]; then
     PerfStatsfilename="sql_perf_stats.sql"
 fi
