@@ -10,7 +10,7 @@ sql_collect_perfstats()
         if [[ $COLLECT_PERFSTATS == [Yy][eE][sS] ]] ; then
                 #Start regular PerfStats script as a background job
                 echo -e "$(date -u +"%T %D") Starting SQL Perf Stats script as a background job..." | tee -a $pssdiag_log
-                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Perf_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Perf_Stats.out"` &
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"$PerfStatsfilename" -o"$outputdir/${1}_${2}_SQL_Perf_Stats.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 				sleep 5s
@@ -18,7 +18,7 @@ sql_collect_perfstats()
 
 				#Start Linux Stats script as a background job
 				echo -e "$(date -u +"%T %D") Starting SQL Linux Stats script as a background job..." | tee -a $pssdiag_log
-                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Linux_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Perf_Stats.out"` &
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_linux_stats.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Perf_Stats.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 				sleep 5s
@@ -26,7 +26,7 @@ sql_collect_perfstats()
 
 				#Start HighCPU Stats script as a background job
 				echo -e "$(date -u +"%T %D") Starting SQL High CPU Stats script as a background job..." | tee -a $pssdiag_log
-                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_HighCPU_Perf_Stats.sql" -o"$outputdir/${1}_${2}_SQL_HighCPU_Perf_Stats.out"` &
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_highcpu_perf_stats.sql" -o"$outputdir/${1}_${2}_SQL_HighCPU_Perf_Stats.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 				sleep 5s
@@ -34,7 +34,7 @@ sql_collect_perfstats()
 
 				#Start High_IO Stats script as a background job
 				echo -e "$(date -u +"%T %D") Starting SQL High IO Stats script as a background job..." | tee -a $pssdiag_log
-                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_HighIO_Perf_Stats.sql" -o"$outputdir/${1}_${2}_SQL_HighIO_Perf_Stats.out"` &
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_highio_perf_stats.sql" -o"$outputdir/${1}_${2}_SQL_HighIO_Perf_Stats.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 				sleep 5s
@@ -48,9 +48,9 @@ sql_collect_counters()
         if [[ $COLLECT_SQL_COUNTERS == [Yy][eE][sS] ]] ; then
                 #Start sql performance counter script as a background job
                 #Replace Interval with SED
-                sed -i'' -e"2s/.*/SET @SQL_COUNTER_INTERVAL = $SQL_COUNTERS_INTERVAL/g" SQL_Performance_Counters.sql
-                echo -e "$(date -u +"%T %D") Starting SQL Performance counter script as a background job.... " | tee -a $pssdiag_log
-                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Performance_Counters.sql" -o"$outputdir/${1}_${2}_SQL_Performance_Counters.out"` &
+                sed -i'' -e"2s/.*/SET @SQL_COUNTER_INTERVAL = $SQL_COUNTERS_INTERVAL/g" sql_performance_counters.sql
+                echo -e "$(date -u +"%T %D") Starting SQL Performance counter script as a background job... " | tee -a $pssdiag_log
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_performance_counters.sql" -o"$outputdir/${1}_${2}_SQL_Performance_Counters.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 		sleep 5s
@@ -63,8 +63,8 @@ sql_collect_memstats()
 {
         if [[ $COLLECT_SQL_MEM_STATS == [Yy][eE][sS] ]] ; then
                 #Start SQL Memory Status script as a background job
-                echo -e "$(date -u +"%T %D") Starting SQL Memory Status script as a background job.... " | tee -a $pssdiag_log
-                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Mem_Stats.sql" -o"$outputdir/${1}_${2}_SQL_Mem_Stats.out"` &
+                echo -e "$(date -u +"%T %D") Starting SQL Memory Status script as a background job... " | tee -a $pssdiag_log
+                `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_mem_stats.sql" -o"$outputdir/${1}_${2}_SQL_Mem_Stats.out"` &
                 mypid=$!
                 #printf "%s\n" "$mypid" >> $outputdir/pssdiag_stoppids_sql_collectors.log
 		sleep 5s
@@ -76,7 +76,7 @@ sql_collect_sql_custom()
 {
         if [[ $CUSTOM_COLLECTOR == [Yy][eE][sS] ]] ; then
                 #Start Custom Collector  scripts as a background job
-                echo -e "$(date -u +"%T %D") Starting SQL Custom Collector Scripts as a background job.... " | tee -a $pssdiag_log
+                echo -e "$(date -u +"%T %D") Starting SQL Custom Collector Scripts as a background job... " | tee -a $pssdiag_log
                 for filename in my_sql_custom_collector*.sql; do
                    `"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"${filename}" -o"$outputdir/${1}_${2}_${filename}_Output.out"` &
                     mypid=$!
@@ -123,19 +123,19 @@ sql_collect_config()
 {
         #include whatever base collector scripts exist here
         echo -e "$(date -u +"%T %D") Collecting SQL Configuration information at startup..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Configuration.sql" -o"$outputdir/${1}_${2}_SQL_Configuration_Startup.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_configuration.sql" -o"$outputdir/${1}_${2}_SQL_Configuration_Startup.out"
 }
 
 sql_collect_linux_snapshot()
 {
         echo -e "$(date -u +"%T %D") Collecting SQL Linux Snapshot at Startup..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Linux_Snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Snapshot_Startup.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_linux_snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Snapshot_Startup.out"
 }
 
 sql_collect_perfstats_snapshot()
 {
         echo -e "$(date -u +"%T %D") Collecting SQL Perf Stats Snapshot at Startup..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Perf_Stats_Snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Perf_Stats_Snapshot_Startup.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_perf_stats_snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Perf_Stats_Snapshot_Startup.out"
 }
 
 # end of all function definitions
@@ -156,6 +156,7 @@ find_sqlcmd
 #Checks: if user passed any parameter to the script 
 scenario=${1,,}
 authentication_mode=${2^^}
+PerfStatsfilename="${3,,}"; : "${PerfStatsfilename:=sql_perf_stats.sql}"
 
 # setup the output directory to collect data and logs
 working_dir="$PWD"
@@ -559,6 +560,16 @@ if [[ -z "$scenario" ]] && [[ "$is_instance_inside_container_active" == "YES" ]]
 	done 
 fi
 
+# ─────────────────────────────────────────────────────────────────────────────────────
+# - Get user input for PerfStatsfilename                  
+# - Check if PerfStatsfilename is valid, set to default if not
+# - PSSDiag...               
+# ─────────────────────────────────────────────────────────────────────────────────────
+PerfStatsfilename_allowed_values=("sql_perf_stats_io.sql" "sql_perf_stats_quickwaits.sql" "sql_perf_stats.sql")
+if [[ ! " ${PerfStatsfilename_allowed_values[@]} " =~ " ${PerfStatsfilename} " ]]; then
+    PerfStatsfilename="sql_perf_stats.sql"
+fi
+
 # Specify all the defaults here if not specified in config file.
 ####################################################
 COLLECT_OS_CONFIG=${COLLECT_CONFIG:-"NO"}
@@ -632,6 +643,7 @@ echo "$(date -u +"%T %D") PSSDiag Executed with sudo: $([ -n "$SUDO_USER" ] && e
 echo "$(date -u +"%T %D") PSSDiag version: ${script_version}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Executing PSSDiag on: ${HOSTNAME}"  >> $pssdiag_log
 echo "$(date -u +"%T %D") Scenario file used: ${scenario}" >> $pssdiag_log
+echo "$(date -u +"%T %D") Perf Stats file used: ${PerfStatsfilename}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Authentication mode used: ${authentication_mode}" >> $pssdiag_log
 echo "$(date -u +"%T %D") Working Directory: ${working_dir}" >> $pssdiag_log 
 echo "$(date -u +"%T %D") Output Directory: ${outputdir}" >> $pssdiag_log 

@@ -48,7 +48,7 @@ sql_collect_alwayson()
 {
 if [[ $COLLECT_SQL_HA_LOGS == [Yy][eE][sS]  ]]; then
         echo -e "$(date -u +"%T %D") Collecting SQL AlwaysOn configuration at Shutdown..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_AlwaysOnDiagScript.sql" -o"$outputdir/${1}_${2}_SQL_AlwaysOnDiag_Shutdown.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_alwaysondiagscript.sql" -o"$outputdir/${1}_${2}_SQL_AlwaysOnDiag_Shutdown.out"
 fi
 }
 
@@ -56,32 +56,32 @@ sql_collect_querystore()
 {
 if [[ $COLLECT_QUERY_STORE == [Yy][eE][sS]  ]]; then
         echo -e "$(date -u +"%T %D") Collecting SQL Query Store information at Shutdown..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_QueryStore.sql" -o"$outputdir/${1}_${2}_SQL_QueryStore_Shutdown.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_querystore.sql" -o"$outputdir/${1}_${2}_SQL_QueryStore_Shutdown.out"
 fi
 }
 
 sql_collect_perfstats_snapshot()
 {
         echo -e "$(date -u +"%T %D") Collecting SQL Perf Stats Snapshot at Shutdown..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Perf_Stats_Snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Perf_Stats_Snapshot_Shutdown.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_perf_stats_snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Perf_Stats_Snapshot_Shutdown.out"
 }
 
 sql_collect_config()
 {
 	echo -e "$(date -u +"%T %D") Collecting SQL Configuration Snapshot at Shutdown..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Configuration.sql" -o"$outputdir/${1}_${2}_SQL_Configuration_Shutdown.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_configuration.sql" -o"$outputdir/${1}_${2}_SQL_Configuration_Shutdown.out"
 
         #echo -e "$(date -u +"%T %D") Collecting SQL traces information at Shutdown..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_active_profiler_xe_traces.sql" -o"$outputdir/${1}_${2}_SQL_ActiveProfilerXeventTraces.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_active_profiler_xe_traces.sql" -o"$outputdir/${1}_${2}_SQL_ActiveProfilerXeventTraces.out"
 
         echo -e "$(date -u +"%T %D") Collecting SQL MiscDiag information at Shutdown..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_MiscDiaginfo.sql" -o"$outputdir/${1}_${2}_SQL_MiscDiagInfo.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_miscdiaginfo.sql" -o"$outputdir/${1}_${2}_SQL_MiscDiagInfo.out"
 }
 
 sql_collect_linux_snapshot()
 {
         echo -e "$(date -u +"%T %D") Collecting SQL Linux Snapshot at Shutdown..." | tee -a $pssdiag_log
-        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"SQL_Linux_Snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Snapshot_Shutdown.out"
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_linux_snapshot.sql" -o"$outputdir/${1}_${2}_SQL_Linux_Snapshot_Shutdown.out"
 }
 
 sql_collect_databases_disk_map()
