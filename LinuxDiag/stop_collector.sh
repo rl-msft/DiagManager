@@ -55,8 +55,8 @@ fi
 sql_collect_querystore()
 {
 if [[ $COLLECT_QUERY_STORE == [Yy][eE][sS]  ]]; then
-        #echo -e "$(date -u +"%T %D") Collecting SQL Query Store information at Shutdown..." | tee -a $pssdiag_log
-        #"$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_querystore.sql" -o"$outputdir/${1}_${2}_SQL_QueryStore_Shutdown.out"
+        echo -e "$(date -u +"%T %D") Collecting SQL Query Store information at Shutdown..." | tee -a $pssdiag_log
+        "$SQLCMD" -S$SQL_SERVER_NAME $CONN_AUTH_OPTIONS -C -i"sql_querystore.sql" -o"$outputdir/${1}_${2}_SQL_QueryStore_Shutdown.out"
 fi
 }
 

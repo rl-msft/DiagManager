@@ -65,7 +65,7 @@ COLLECT_SQL_TRACE=NO
 SQL_TRACE_TEMPLATE=pssdiag_trace_general
 
 # Specify whether we need to extract QDS/Query Store information from this server
-COLLECT_QUERY_STORE=YES
+COLLECT_QUERY_STORE=NO
 
 # Collects various memory related DMVS. Specify YES or NO.
 COLLECT_SQL_MEM_STATS=YES
